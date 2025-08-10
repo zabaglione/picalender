@@ -1,0 +1,290 @@
+# PiCalendar 設定スキーマ定義
+# このファイルは settings.yaml の構造とデフォルト値を定義します
+
+# ========================================
+# 画面設定
+# ========================================
+screen:
+  width: 1024              # 画面幅（ピクセル）
+  height: 600              # 画面高さ（ピクセル）
+  fps: 30                  # フレームレート
+  fullscreen: true         # フルスクリーンモード
+  hide_cursor: true        # マウスカーソル非表示
+
+# ========================================
+# UI設定
+# ========================================
+ui:
+  # 画面余白
+  margins:
+    x: 24                  # 左右余白
+    y: 16                  # 上下余白
+  
+  # フォントサイズ
+  clock_font_px: 130       # 時計フォントサイズ
+  date_font_px: 36         # 日付フォントサイズ
+  cal_font_px: 22          # カレンダーフォントサイズ
+  weather_font_px: 22      # 天気フォントサイズ
+  
+  # 色設定（RGB値）
+  colors:
+    text: [255, 255, 255]          # 通常テキスト色（白）
+    sunday: [255, 100, 100]        # 日曜日色（赤系）
+    saturday: [100, 100, 255]      # 土曜日色（青系）
+    weekday: [255, 255, 255]       # 平日色（白）
+    background: [0, 0, 0]          # 背景色（黒）
+    weather_panel: [40, 40, 40]    # 天気パネル背景色
+    weather_panel_alpha: 200       # 天気パネル透明度（0-255）
+  
+  # レイアウト位置（座標またはキーワード）
+  layout:
+    clock:
+      position: "center-top"        # center-top, [x, y]
+      offset: [0, 100]             # 位置オフセット
+    date:
+      position: "below-clock"       # below-clock, [x, y]
+      offset: [0, 20]              # 位置オフセット
+    calendar:
+      position: "bottom-right"      # bottom-right, [x, y]
+      size: [420, 280]             # サイズ
+    weather:
+      position: "bottom-left"       # bottom-left, [x, y]
+      size: [420, 280]             # サイズ
+      corner_radius: 10            # 角丸半径
+    character:
+      position: [50, 50]           # 絶対座標
+      
+  # アニメーション設定
+  animations:
+    fade_duration: 0.5             # フェード時間（秒）
+    transition_type: "ease"        # none, linear, ease
+
+# ========================================
+# カレンダー設定
+# ========================================
+calendar:
+  first_weekday: "SUNDAY"          # SUNDAY or MONDAY
+  show_week_numbers: false        # 週番号表示（将来拡張）
+  show_holidays: false             # 祝日表示（将来拡張）
+  show_lunar: false               # 六曜表示（将来拡張）
+  
+  # カレンダーグリッド設定
+  grid:
+    weeks: 6                      # 表示週数
+    header_height: 30             # ヘッダー高さ
+    cell_padding: 5               # セル内余白
+    border_width: 1               # 枠線幅
+    border_color: [100, 100, 100] # 枠線色
+
+# ========================================
+# 背景設定
+# ========================================
+background:
+  dir: "./wallpapers"             # 背景画像ディレクトリ
+  mode: "fit"                     # fit, scale, tile, center
+  rescan_sec: 300                 # ディレクトリ再スキャン間隔（秒）
+  
+  # 背景画像ローテーション（将来拡張）
+  rotation:
+    enabled: false                # ローテーション有効化
+    interval_sec: 3600            # 切り替え間隔（秒）
+    transition: "fade"            # none, fade, slide
+    random: false                 # ランダム選択
+    
+  # 時間帯別背景（将来拡張）
+  time_based:
+    enabled: false
+    morning: "06:00-12:00"        # 朝の時間帯
+    afternoon: "12:00-18:00"      # 昼の時間帯
+    evening: "18:00-22:00"        # 夕方の時間帯
+    night: "22:00-06:00"          # 夜の時間帯
+
+# ========================================
+# 天気設定
+# ========================================
+weather:
+  provider: "openmeteo"           # openmeteo, yahoo, darksky, etc.
+  refresh_sec: 1800               # 更新間隔（秒）= 30分
+  timeout_sec: 10                 # タイムアウト（秒）
+  retry_count: 3                  # リトライ回数
+  retry_delay_sec: 60             # リトライ間隔（秒）
+  
+  # 位置情報
+  location:
+    lat: 35.681236                # 緯度（東京駅）
+    lon: 139.767125               # 経度（東京駅）
+    city_code: "130010"           # 都市コード（Yahoo用）
+    timezone: "Asia/Tokyo"        # タイムゾーン
+  
+  # キャッシュ設定
+  cache:
+    enabled: true                 # キャッシュ有効化
+    ttl_sec: 3600                 # キャッシュ有効期限（秒）
+    file: ".weather_cache.json"   # キャッシュファイル
+  
+  # 表示設定
+  display:
+    days: 3                       # 表示日数
+    show_credit: false            # クレジット表示（Yahoo必須）
+    show_provider: false          # プロバイダ名表示
+    temperature_unit: "C"         # C or F
+    wind_unit: "m/s"             # m/s, km/h, mph
+  
+  # Open-Meteo設定
+  openmeteo:
+    api_url: "https://api.open-meteo.com/v1/forecast"
+    params:
+      hourly: []                  # 時間単位データ
+      daily: ["temperature_2m_max", "temperature_2m_min", "precipitation_probability_max", "weathercode"]
+      timezone: "auto"
+  
+  # Yahoo天気設定
+  yahoo:
+    api_url: "https://weather.tsukumijima.net/api/forecast"
+    app_id: ""                    # Yahoo App ID（.envから読み込み）
+    client_id: ""                 # OAuth Client ID
+    client_secret: ""             # OAuth Client Secret
+
+# ========================================
+# 2Dキャラクター設定
+# ========================================
+character:
+  enabled: false                  # キャラクター表示有効化
+  sprite: "./assets/sprites/char_idle.png"  # スプライトシート
+  
+  # スプライト設定
+  animation:
+    frame_width: 128              # フレーム幅
+    frame_height: 128             # フレーム高さ
+    fps: 8                        # アニメーションFPS
+    scale: 1.0                    # 表示倍率
+    loop: true                    # ループ再生
+    
+  # 複数アニメーション（将来拡張）
+  states:
+    idle: "char_idle.png"         # 待機
+    happy: "char_happy.png"       # 喜び
+    sleep: "char_sleep.png"       # 睡眠
+    
+  # 時間帯別動作（将来拡張）
+  schedule:
+    "06:00-09:00": "happy"        # 朝
+    "22:00-06:00": "sleep"        # 夜
+    default: "idle"               # その他
+
+# ========================================
+# フォント設定
+# ========================================
+fonts:
+  # メインフォント
+  main:
+    path: "./assets/fonts/NotoSansCJK-Regular.otf"
+    fallback: "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.otf"
+    
+  # 用途別フォント（将来拡張）
+  clock:
+    path: null                    # nullの場合mainを使用
+    bold: false
+  calendar:
+    path: null
+    size_adjust: 1.0              # サイズ調整係数
+  weather:
+    path: null
+    
+  # フォントレンダリング設定
+  rendering:
+    antialiasing: true            # アンチエイリアス
+    hinting: true                 # ヒンティング
+    kerning: true                 # カーニング
+
+# ========================================
+# ログ設定
+# ========================================
+logging:
+  level: "INFO"                   # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+  
+  # 出力先
+  output:
+    console: true                 # コンソール出力
+    file: false                   # ファイル出力
+    journald: true                # systemd journal
+    
+  # ファイル出力設定
+  file:
+    path: "./logs/picalendar.log"
+    rotate_size_mb: 10           # ローテーションサイズ
+    rotate_count: 5               # 保持ファイル数
+    
+  # モジュール別レベル
+  modules:
+    weather: "DEBUG"              # 天気モジュール
+    renderer: "INFO"              # 描画モジュール
+    asset: "WARNING"              # アセットモジュール
+
+# ========================================
+# パフォーマンス設定
+# ========================================
+performance:
+  # CPU管理
+  cpu:
+    priority: 0                   # プロセス優先度（-20〜19）
+    affinity: []                  # CPUアフィニティ（コア番号）
+    
+  # メモリ管理
+  memory:
+    gc_interval_sec: 300          # GC実行間隔（秒）
+    cache_limit_mb: 50            # キャッシュ上限（MB）
+    
+  # 描画最適化
+  rendering:
+    dirty_rect: true              # ダーティ矩形最適化
+    double_buffer: true           # ダブルバッファリング
+    vsync: true                   # 垂直同期
+    hardware_accel: true          # ハードウェアアクセラレーション
+    
+  # 省電力設定（将来拡張）
+  power_save:
+    enabled: false
+    idle_timeout_sec: 300         # アイドルタイムアウト
+    dim_brightness: 0.3           # 減光時明度
+    sleep_hours: "23:00-06:00"    # スリープ時間帯
+
+# ========================================
+# システム設定
+# ========================================
+system:
+  # 自動起動設定
+  autostart:
+    enabled: true                 # 自動起動有効化
+    delay_sec: 5                  # 起動遅延（秒）
+    
+  # ネットワーク設定
+  network:
+    check_connectivity: true      # 接続性確認
+    check_interval_sec: 60        # 確認間隔（秒）
+    timeout_sec: 5                # タイムアウト（秒）
+    
+  # エラーハンドリング
+  error:
+    max_retries: 3                # 最大リトライ回数
+    restart_on_critical: true     # 致命的エラー時再起動
+    
+  # 開発/デバッグ設定
+  debug:
+    enabled: false                # デバッグモード
+    show_fps: false               # FPS表示
+    show_dirty_rects: false       # ダーティ矩形表示
+    save_screenshots: false       # スクリーンショット保存
+    mock_weather: false           # 天気データモック使用
+
+# ========================================
+# 環境変数マッピング
+# ========================================
+env_mapping:
+  # 環境変数から設定値を上書き
+  # 例: PICALENDAR_WEATHER_PROVIDER=yahoo
+  PICALENDAR_WEATHER_PROVIDER: "weather.provider"
+  PICALENDAR_WEATHER_API_KEY: "weather.yahoo.app_id"
+  PICALENDAR_LOG_LEVEL: "logging.level"
+  PICALENDAR_DEBUG: "system.debug.enabled"

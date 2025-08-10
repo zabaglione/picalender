@@ -1,0 +1,58 @@
+# PiCalendar 設定ファイル
+# デフォルト設定 - 必要に応じて変更してください
+
+screen:
+  width: 1024
+  height: 600
+  fps: 30
+  fullscreen: true
+  hide_cursor: true
+
+ui:
+  margins:
+    x: 24
+    y: 16
+  clock_font_px: 130
+  date_font_px: 36
+  cal_font_px: 22
+  weather_font_px: 22
+  colors:
+    text: [255, 255, 255]
+    sunday: [255, 100, 100]
+    saturday: [100, 100, 255]
+    weekday: [255, 255, 255]
+    background: [0, 0, 0]
+    weather_panel: [40, 40, 40]
+    weather_panel_alpha: 200
+
+calendar:
+  first_weekday: "SUNDAY"
+
+background:
+  dir: "./wallpapers"
+  mode: "fit"
+  rescan_sec: 300
+
+weather:
+  provider: "openmeteo"
+  refresh_sec: 1800
+  timeout_sec: 10
+  location:
+    lat: 35.681236
+    lon: 139.767125
+
+character:
+  enabled: false
+  sprite: "./assets/sprites/char_idle.png"
+  frame_width: 128
+  frame_height: 128
+  fps: 8
+
+fonts:
+  main:
+    path: "./assets/fonts/NotoSansCJK-Regular.otf"
+    fallback: "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.otf"
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s [%(levelname)s] %(name)s: %(message)s"

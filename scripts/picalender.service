@@ -1,0 +1,44 @@
+[Unit]
+Description=PiCalendar Clock Kiosk (pygame KMSDRM)
+After=multi-user.target network.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/picalender
+Environment="SDL_VIDEODRIVER=kmsdrm"
+Environment="SDL_FBDEV=/dev/fb0"
+Environment="SDL_KMSDRM_DEVICE_INDEX=0"
+Environment="SDL_RENDER_DRIVER=software"
+Environment="DISPLAY=:0"
+Environment="PYTHONUNBUFFERED=1"
+Environment="PYTHONPATH=/home/pi/picalender"
+
+# 起動前の待機時間（ネットワークとディスプレイの準備）
+ExecStartPre=/bin/sleep 10
+
+# メインアプリケーション起動
+ExecStart=/usr/bin/python3 /home/pi/picalender/main.py
+
+# 再起動設定
+Restart=always
+RestartSec=5
+StartLimitBurst=5
+
+# ログ設定
+StandardOutput=journal
+StandardError=journal
+
+# プロセス管理
+KillMode=control-group
+TimeoutStopSec=10
+
+# リソース制限（Raspberry Pi Zero 2 W向け）
+MemoryMax=256M
+CPUQuota=80%
+
+[Install]
+WantedBy=multi-user.target

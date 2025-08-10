@@ -1,0 +1,20 @@
+# PiCalendar Requirements
+# Python 3.11+
+
+# Core dependencies
+pygame>=2.5.0       # SDL2ベースの描画ライブラリ
+PyYAML>=6.0        # YAML設定ファイル読み込み
+requests>=2.31.0   # HTTP通信（天気API）
+python-dotenv>=1.0.0  # 環境変数管理
+
+# Optional dependencies for development
+pytest>=7.4.0      # テストフレームワーク
+pytest-cov>=4.1.0  # カバレッジ測定
+pytest-timeout>=2.2.0  # テストタイムアウト
+black>=23.7.0      # コードフォーマッター
+flake8>=6.1.0      # リンター
+mypy>=1.5.0        # 型チェッカー
+
+# Optional for advanced features
+Pillow>=10.0.0     # 画像処理（スプライト等）
+numpy>=1.24.0      # 数値計算（最適化用）

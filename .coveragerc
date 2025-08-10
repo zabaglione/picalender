@@ -1,0 +1,58 @@
+[run]
+# カバレッジ測定対象
+source = src
+omit = 
+    */tests/*
+    */test_*.py
+    */__pycache__/*
+    */venv/*
+    */env/*
+    */.venv/*
+
+[report]
+# カバレッジレポート設定
+precision = 1
+show_missing = True
+skip_covered = False
+skip_empty = True
+
+# 除外パターン
+exclude_lines =
+    # デバッグ専用コード
+    pragma: no cover
+    
+    # デバッグ文
+    def __repr__
+    def __str__
+    
+    # 抽象メソッド
+    raise NotImplementedError
+    @abstractmethod
+    
+    # 条件分岐の一部
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    
+    # 例外処理
+    except ImportError
+    except Exception as e:
+    
+    # ログ出力
+    logger.debug
+    logger.info
+    logging.debug
+    logging.info
+    
+    # アサーション
+    assert
+    raise AssertionError
+
+[html]
+# HTMLレポート設定
+directory = htmlcov
+title = PiCalendar Coverage Report
+
+[json]
+# JSONレポート設定
+output = coverage.json
+pretty_print = true

@@ -1,0 +1,77 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Environment variables
+.env
+.env.local
+*.env
+
+# Logs
+logs/
+*.log
+
+# Cache
+.weather_cache.json
+cache/
+
+# Config (local overrides)
+settings.local.yaml
+config.local.yaml
+
+# Assets (user provided)
+assets/fonts/*.otf
+assets/fonts/*.ttf
+wallpapers/*.jpg
+wallpapers/*.png
+wallpapers/*.jpeg
+
+# systemd
+*.service.bak
+
+# Temporary files
+tmp/
+temp/
+*.tmp
