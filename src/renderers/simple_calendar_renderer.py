@@ -99,7 +99,9 @@ class SimpleCalendarRenderer:
                 day_rect = day_text.get_rect(center=(day_x, self.cal_y + 50))
                 screen.blit(day_text, day_rect)
             
-            # カレンダー日付
+            # カレンダー日付（日曜日始まりに設定）
+            # calendarモジュールを日曜日始まりに設定
+            calendar.setfirstweekday(calendar.SUNDAY)
             cal_obj = calendar.monthcalendar(now.year, now.month)
             day_y = self.cal_y + 80
             

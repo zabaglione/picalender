@@ -30,6 +30,7 @@ sys.path.append(str(Path(__file__).parent / 'src' / 'renderers'))
 from simple_clock_renderer import SimpleClockRenderer
 from simple_date_renderer import SimpleDateRenderer
 from simple_calendar_renderer import SimpleCalendarRenderer
+from simple_weather_renderer import SimpleWeatherRenderer
 
 
 class PiCalendarApp:
@@ -127,6 +128,14 @@ class PiCalendarApp:
                 self.logger.info("Calendar renderer initialized")
             except Exception as e:
                 self.logger.error(f"Failed to initialize calendar renderer: {e}")
+            
+            # 天気レンダラー
+            try:
+                weather_renderer = SimpleWeatherRenderer(self.settings)
+                self.renderers.append(('weather', weather_renderer))
+                self.logger.info("Weather renderer initialized")
+            except Exception as e:
+                self.logger.error(f"Failed to initialize weather renderer: {e}")
             
             self.logger.info("Initialization complete")
             return True
@@ -228,6 +237,13 @@ class PiCalendarApp:
     def cleanup(self):
         """クリーンアップ処理"""
         self.logger.info("Cleaning up...")
+        # レンダラーのクリーンアップ
+        for name, renderer in self.renderers:
+            if hasattr(renderer, 'cleanup'):
+                try:
+                    renderer.cleanup()
+                except Exception as e:
+                    self.logger.error(f"Failed to cleanup {name}: {e}")
         pygame.quit()
         self.logger.info("PiCalendar stopped")
     
