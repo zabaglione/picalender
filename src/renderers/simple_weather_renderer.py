@@ -149,29 +149,29 @@ class SimpleWeatherRenderer:
     
     def _get_weather_icon(self, code):
         """天気コードから天気アイコン文字を取得"""
-        # WMO Weather Code
+        # WMO Weather Code - テキストで表示
         if code == 0:
-            return "☀️"  # 晴れ
+            return "晴"  # 晴れ
         elif code in [1, 2]:
-            return "🌤️"  # 晴れ時々曇り
+            return "晴曇"  # 晴れ時々曇り
         elif code == 3:
-            return "☁️"  # 曇り
+            return "曇"  # 曇り
         elif code in [45, 48]:
-            return "🌫️"  # 霧
+            return "霧"  # 霧
         elif code in [51, 53, 55, 56, 57]:
-            return "🌦️"  # 小雨
+            return "小雨"  # 小雨
         elif code in [61, 63, 65, 66, 67]:
-            return "🌧️"  # 雨
+            return "雨"  # 雨
         elif code in [71, 73, 75, 77]:
-            return "❄️"  # 雪
+            return "雪"  # 雪
         elif code in [80, 81, 82]:
-            return "⛈️"  # にわか雨
+            return "雷雨"  # にわか雨
         elif code in [85, 86]:
-            return "🌨️"  # にわか雪
+            return "雪"  # にわか雪
         elif code in [95, 96, 99]:
-            return "⛈️"  # 雷雨
+            return "雷雨"  # 雷雨
         else:
-            return "🌡️"  # その他
+            return "---"  # その他
     
     def _get_day_label(self, date_str):
         """日付から曜日ラベルを取得"""
@@ -231,11 +231,15 @@ class SimpleWeatherRenderer:
             day_rect = day_text.get_rect(centerx=x + day_width // 2, y=y)
             screen.blit(day_text, day_rect)
             
-            # 天気アイコン
+            # 天気アイコン（テキスト）
             icon = self._get_weather_icon(forecast.get('weather_code', 0))
-            icon_font = pygame.font.Font(None, 48)
-            icon_text = icon_font.render(icon, True, (255, 255, 255))
-            icon_rect = icon_text.get_rect(centerx=x + day_width // 2, y=y + 35)
+            # 日本語フォントを使用
+            try:
+                icon_font = pygame.font.SysFont('notosanscjkjp', 32)
+            except:
+                icon_font = pygame.font.Font(None, 32)
+            icon_text = icon_font.render(icon, True, (150, 200, 255))
+            icon_rect = icon_text.get_rect(centerx=x + day_width // 2, y=y + 40)
             screen.blit(icon_text, icon_rect)
             
             # 気温
@@ -249,7 +253,7 @@ class SimpleWeatherRenderer:
             # 降水確率
             precip = forecast.get('precip_prob', 0)
             if precip > 0:
-                precip_text = f"☔ {precip}%"
+                precip_text = f"雨 {precip}%"
                 precip_surface = self.font.render(precip_text, True, (150, 200, 255))
                 precip_rect = precip_surface.get_rect(centerx=x + day_width // 2, y=y + 120)
                 screen.blit(precip_surface, precip_rect)
