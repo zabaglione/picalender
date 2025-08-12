@@ -31,6 +31,7 @@ from simple_clock_renderer import SimpleClockRenderer
 from simple_date_renderer import SimpleDateRenderer
 from simple_calendar_renderer import SimpleCalendarRenderer
 from simple_weather_renderer import SimpleWeatherRenderer
+from simple_wallpaper_renderer import SimpleWallpaperRenderer
 
 
 class PiCalendarApp:
@@ -67,6 +68,10 @@ class PiCalendarApp:
                 'clock_font_px': 130,
                 'date_font_px': 36,
                 'calendar_font_px': 22
+            },
+            'wallpaper': {
+                'rotation_seconds': 300,  # 5分ごとに切り替え
+                'fit_mode': 'fill'  # fit, fill, stretch
             }
         }
         
@@ -104,6 +109,14 @@ class PiCalendarApp:
             
             # レンダラー初期化
             self.logger.info("Initializing renderers...")
+            
+            # 壁紙レンダラー（最初に初期化）
+            try:
+                wallpaper_renderer = SimpleWallpaperRenderer(self.settings)
+                self.renderers.append(('wallpaper', wallpaper_renderer))
+                self.logger.info("Wallpaper renderer initialized")
+            except Exception as e:
+                self.logger.error(f"Failed to initialize wallpaper renderer: {e}")
             
             # 時計レンダラー
             try:
@@ -201,8 +214,8 @@ class PiCalendarApp:
                         elif event.key == pygame.K_f:
                             self.toggle_fullscreen()
                 
-                # 背景描画
-                self.draw_gradient_background(self.screen)
+                # 背景描画（壁紙レンダラーが処理するため不要）
+                # self.draw_gradient_background(self.screen)
                 
                 # レンダラー実行
                 for name, renderer in self.renderers:
