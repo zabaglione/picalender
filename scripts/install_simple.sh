@@ -54,8 +54,8 @@ Environment="PYTHONUNBUFFERED=1"
 # 起動前の待機時間（ネットワークとディスプレイの準備）
 ExecStartPre=/bin/sleep 5
 
-# シンプル版を起動
-ExecStart=/usr/bin/python3 $INSTALL_DIR/main_simple.py
+# メインアプリケーションを起動
+ExecStart=/usr/bin/python3 $INSTALL_DIR/main.py
 
 # 再起動設定
 Restart=always
