@@ -340,7 +340,7 @@ class SimpleWeatherRenderer:
             if precip > 0:
                 # より大きな雨滴アイコンを描画
                 drop_x = x + day_width // 2 - 25
-                drop_y = y + 100  # 位置を上に調整
+                drop_y = y + 105  # 気温との間隔を広げる
                 
                 # 水滴の形を描画（サイズを大きく）
                 drop_color = (150, 200, 255)
