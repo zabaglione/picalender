@@ -1,0 +1,89 @@
+# PiCalendar 設定ファイル (サンプル)
+# このファイルを settings.yaml にコピーして使用してください
+
+# 画面設定
+screen:
+  width: 1024              # 画面幅（ピクセル）
+  height: 600              # 画面高さ（ピクセル）
+  fps: 30                  # フレームレート
+  fullscreen: true         # フルスクリーン表示
+
+# UI設定
+ui:
+  margins: 
+    x: 24                  # 左右マージン
+    y: 16                  # 上下マージン
+  clock_font_px: 130       # 時計のフォントサイズ
+  date_font_px: 36         # 日付のフォントサイズ
+  calendar_font_px: 22     # カレンダーのフォントサイズ
+  weather_font_px: 22      # 天気のフォントサイズ
+
+# カレンダー設定
+calendar:
+  first_weekday: "SUNDAY"  # 週の始まり (SUNDAY or MONDAY)
+
+# 背景設定
+background:
+  directory: "./wallpapers"  # 壁紙ディレクトリ
+  mode: "fit"                # 表示モード (fit, scale, fill, tile)
+  rescan_sec: 300            # 再スキャン間隔（秒）
+
+# 天気設定
+weather:
+  provider: "openmeteo"      # 天気プロバイダ (openmeteo, yahoo)
+  refresh_sec: 1800          # 更新間隔（秒）
+  location:
+    # 東京の座標（変更してください）
+    latitude: 35.681236
+    longitude: 139.767125
+  cache:
+    enabled: true            # キャッシュ有効化
+    directory: "./cache/weather"
+    ttl: 7200               # キャッシュ有効期限（秒）
+    max_size: 100           # 最大キャッシュエントリ数
+
+# キャラクター設定
+character:
+  enabled: false            # キャラクター表示（true で有効化）
+  sprite: "./assets/sprites/character_sheet.png"
+  frame_w: 128              # フレーム幅
+  frame_h: 128              # フレーム高さ
+  fps: 8                    # アニメーションFPS
+
+# フォント設定
+fonts:
+  main: "./assets/fonts/NotoSansCJK-Regular.otf"
+  # フォールバック（システムフォント）
+  fallback: "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.otf"
+
+# ログ設定
+logging:
+  level: "INFO"             # ログレベル (DEBUG, INFO, WARNING, ERROR)
+  file: "./logs/picalender.log"
+  max_size: 10485760        # 最大ファイルサイズ（10MB）
+  backup_count: 5           # バックアップファイル数
+
+# パフォーマンス設定
+performance:
+  auto_adjust: true         # 自動品質調整
+  default_quality: "medium" # デフォルト品質 (ultra_low, low, medium, high)
+  monitor_interval: 10      # 監視間隔（秒）
+  thresholds:
+    cpu_high: 50            # CPU使用率上限（%）
+    memory_high: 200        # メモリ使用量上限（MB）
+    fps_low: 15             # 最低FPS
+
+# エラーリカバリ設定
+error_recovery:
+  enabled: true             # エラーリカバリ有効化
+  network:
+    max_retries: 3          # 最大リトライ回数
+    backoff_factor: 2.0     # バックオフ係数
+    max_backoff: 60         # 最大バックオフ時間（秒）
+  filesystem:
+    fallback_paths:         # フォールバックパス
+      - "/tmp"
+      - "/var/tmp"
+  memory:
+    threshold_mb: 50        # メモリ不足閾値（MB）
+    cleanup_aggressive: false  # アグレッシブクリーンアップ
