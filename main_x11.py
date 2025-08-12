@@ -60,7 +60,7 @@ class PiCalendarApp:
                 'width': 1024,
                 'height': 600,
                 'fps': 30,
-                'fullscreen': False  # X11ではウィンドウモードから開始
+                'fullscreen': True  # フルスクリーンで開始
             },
             'ui': {
                 'clock_font_px': 130,
