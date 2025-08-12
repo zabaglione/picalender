@@ -23,6 +23,7 @@ os.environ['DISPLAY'] = ':0'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 import pygame
+import yaml
 
 # src.renderersパッケージを経由せずに直接インポート
 import sys
@@ -56,24 +57,8 @@ class PiCalendarApp:
         self.logger.info(f"Display: {os.environ.get('DISPLAY', 'Not set')}")
         self.logger.info("="*50)
         
-        # 基本設定
-        self.settings = {
-            'screen': {
-                'width': 1024,
-                'height': 600,
-                'fps': 30,
-                'fullscreen': True  # フルスクリーンで開始
-            },
-            'ui': {
-                'clock_font_px': 130,
-                'date_font_px': 36,
-                'calendar_font_px': 22
-            },
-            'wallpaper': {
-                'rotation_seconds': 300,  # 5分ごとに切り替え
-                'fit_mode': 'fill'  # fit, fill, stretch
-            }
-        }
+        # 設定を読み込み（settings.yamlがあれば使用）
+        self.settings = self._load_settings()
         
         # フルスクリーン設定（環境変数で制御可能）
         if os.environ.get('PICALENDER_FULLSCREEN', '').lower() == 'true':
@@ -82,6 +67,66 @@ class PiCalendarApp:
         self.screen = None
         self.renderers = []
         self.fullscreen = False
+    
+    def _load_settings(self):
+        """設定ファイルを読み込み"""
+        # デフォルト設定
+        default_settings = {
+            'screen': {
+                'width': 1024,
+                'height': 600,
+                'fps': 30,
+                'fullscreen': True
+            },
+            'ui': {
+                'clock_font_px': 130,
+                'date_font_px': 36,
+                'calendar_font_px': 22,
+                'weather_font_px': 20
+            },
+            'wallpaper': {
+                'rotation_seconds': 300,
+                'fit_mode': 'fill'
+            },
+            'weather': {
+                'location': {
+                    'lat': 35.681236,
+                    'lon': 139.767125
+                },
+                'refresh_sec': 1800
+            }
+        }
+        
+        # settings.yamlを読み込み
+        settings_file = Path(__file__).parent / 'settings.yaml'
+        if settings_file.exists():
+            try:
+                with open(settings_file, 'r', encoding='utf-8') as f:
+                    user_settings = yaml.safe_load(f) or {}
+                
+                # ユーザー設定をマージ
+                self._merge_settings(default_settings, user_settings)
+                self.logger.info(f"Settings loaded from {settings_file}")
+                
+                return default_settings
+            except Exception as e:
+                self.logger.warning(f"Failed to load settings.yaml: {e}")
+                self.logger.info("Using default settings")
+        else:
+            self.logger.info("settings.yaml not found, using default settings")
+        
+        return default_settings
+    
+    def _merge_settings(self, base, override):
+        """設定を再帰的にマージ"""
+        for key, value in override.items():
+            if key in base:
+                if isinstance(base[key], dict) and isinstance(value, dict):
+                    self._merge_settings(base[key], value)
+                else:
+                    base[key] = value
+            else:
+                base[key] = value
     
     def initialize(self):
         """アプリケーションの初期化"""
