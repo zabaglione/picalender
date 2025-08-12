@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 簡易天気レンダラー（AssetManager非依存版）
+画像アイコン対応版
 """
 
 import pygame
@@ -39,11 +40,16 @@ class SimpleWeatherRenderer:
         self.lat = settings.get('weather', {}).get('location', {}).get('lat', 35.681236)
         self.lon = settings.get('weather', {}).get('location', {}).get('lon', 139.767125)
         
+        # アイコンディレクトリ
+        self.icons_dir = Path("assets/weather_icons")
+        self.weather_icons = {}
+        
         # 更新スレッド
         self.update_thread = None
         self.stop_event = threading.Event()
         
         self._init_font()
+        self._load_icons()
         self._load_cache()
         self._start_update_thread()
     
@@ -55,6 +61,68 @@ class SimpleWeatherRenderer:
         except:
             # フォールバック
             self.font = pygame.font.Font(None, self.font_size)
+    
+    def _load_icons(self):
+        """天気アイコンを読み込み"""
+        icon_files = {
+            'sunny': 'sunny.png',
+            'cloudy': 'cloudy.png',
+            'rainy': 'rainy.png',
+            'snowy': 'snowy.png',
+            'thunder': 'thunder.png',
+            'foggy': 'foggy.png',
+            'partly_cloudy': 'partly_cloudy.png',
+            'cloudy_rainy': 'cloudy_rainy.png',
+            'cloudy_then_rainy': 'cloudy_then_rainy.png',
+            'sunny_then_cloudy': 'sunny_then_cloudy.png',
+            'unknown': 'unknown.png'
+        }
+        
+        for name, filename in icon_files.items():
+            icon_path = self.icons_dir / filename
+            try:
+                if icon_path.exists():
+                    icon = pygame.image.load(str(icon_path))
+                    # アイコンサイズを調整（48x48に縮小）
+                    icon = pygame.transform.smoothscale(icon, (48, 48))
+                    self.weather_icons[name] = icon
+                    self.logger.debug(f"Loaded weather icon: {name}")
+            except Exception as e:
+                self.logger.warning(f"Failed to load icon {filename}: {e}")
+        
+        # アイコンが読み込めなかった場合はフォールバック画像を作成
+        if not self.weather_icons:
+            self.logger.warning("No weather icons loaded, creating fallback")
+            self._create_fallback_icons()
+    
+    def _create_fallback_icons(self):
+        """フォールバック用のシンプルなアイコンを作成"""
+        icon_size = (48, 48)
+        
+        # 色定義
+        colors = {
+            'sunny': (255, 220, 0),      # 黄色
+            'cloudy': (180, 180, 180),   # グレー
+            'rainy': (100, 150, 255),    # 青
+            'snowy': (240, 240, 240),    # 白
+            'thunder': (150, 100, 200),  # 紫
+            'foggy': (200, 200, 200),    # 薄いグレー
+            'partly_cloudy': (255, 200, 100),  # オレンジ
+            'unknown': (150, 150, 150)   # グレー
+        }
+        
+        for name, color in colors.items():
+            surface = pygame.Surface(icon_size, pygame.SRCALPHA)
+            pygame.draw.circle(surface, color, (24, 24), 20)
+            
+            # テキストラベルを追加
+            if self.font:
+                label = name[0].upper()
+                text = self.font.render(label, True, (255, 255, 255))
+                text_rect = text.get_rect(center=(24, 24))
+                surface.blit(text, text_rect)
+            
+            self.weather_icons[name] = surface
     
     def _load_cache(self):
         """キャッシュから天気データを読み込み"""
@@ -147,31 +215,46 @@ class SimpleWeatherRenderer:
             self.update_thread.start()
             self.logger.info("天気更新スレッドを開始しました")
     
-    def _get_weather_icon(self, code):
-        """天気コードから天気アイコン文字を取得"""
-        # WMO Weather Code - テキストで表示
+    def _get_weather_icon_name(self, code):
+        """天気コードからアイコン名を取得"""
+        # WMO Weather Code マッピング
+        # より詳細な天気パターンに対応
         if code == 0:
-            return "晴"  # 晴れ
-        elif code in [1, 2]:
-            return "晴曇"  # 晴れ時々曇り
+            return 'sunny'  # 快晴
+        elif code == 1:
+            return 'sunny'  # ほぼ快晴
+        elif code == 2:
+            return 'partly_cloudy'  # 晴れ時々曇り
         elif code == 3:
-            return "曇"  # 曇り
+            return 'cloudy'  # 曇り
         elif code in [45, 48]:
-            return "霧"  # 霧
-        elif code in [51, 53, 55, 56, 57]:
-            return "小雨"  # 小雨
-        elif code in [61, 63, 65, 66, 67]:
-            return "雨"  # 雨
-        elif code in [71, 73, 75, 77]:
-            return "雪"  # 雪
-        elif code in [80, 81, 82]:
-            return "雷雨"  # にわか雨
+            return 'foggy'  # 霧
+        elif code in [51, 53, 55]:
+            return 'cloudy_rainy'  # 霧雨、小雨
+        elif code in [56, 57]:
+            return 'cloudy_rainy'  # 着氷性の霧雨
+        elif code in [61, 63]:
+            return 'rainy'  # 雨
+        elif code == 65:
+            return 'rainy'  # 強い雨
+        elif code in [66, 67]:
+            return 'rainy'  # 着氷性の雨
+        elif code in [71, 73, 75]:
+            return 'snowy'  # 雪
+        elif code == 77:
+            return 'snowy'  # 雪粒
+        elif code in [80, 81]:
+            return 'cloudy_rainy'  # にわか雨
+        elif code == 82:
+            return 'rainy'  # 激しいにわか雨
         elif code in [85, 86]:
-            return "雪"  # にわか雪
-        elif code in [95, 96, 99]:
-            return "雷雨"  # 雷雨
+            return 'snowy'  # にわか雪
+        elif code == 95:
+            return 'thunder'  # 雷雨
+        elif code in [96, 99]:
+            return 'thunder'  # ひょうを伴う雷雨
         else:
-            return "---"  # その他
+            return 'unknown'
     
     def _get_day_label(self, date_str):
         """日付から曜日ラベルを取得"""
@@ -231,16 +314,17 @@ class SimpleWeatherRenderer:
             day_rect = day_text.get_rect(centerx=x + day_width // 2, y=y)
             screen.blit(day_text, day_rect)
             
-            # 天気アイコン（テキスト）
-            icon = self._get_weather_icon(forecast.get('weather_code', 0))
-            # 日本語フォントを使用
-            try:
-                icon_font = pygame.font.SysFont('notosanscjkjp', 32)
-            except:
-                icon_font = pygame.font.Font(None, 32)
-            icon_text = icon_font.render(icon, True, (150, 200, 255))
-            icon_rect = icon_text.get_rect(centerx=x + day_width // 2, y=y + 40)
-            screen.blit(icon_text, icon_rect)
+            # 天気アイコン（画像）
+            icon_name = self._get_weather_icon_name(forecast.get('weather_code', 0))
+            if icon_name in self.weather_icons:
+                icon = self.weather_icons[icon_name]
+                icon_rect = icon.get_rect(centerx=x + day_width // 2, y=y + 30)
+                screen.blit(icon, icon_rect)
+            else:
+                # フォールバック：テキスト表示
+                icon_text = self.font.render(icon_name, True, (150, 200, 255))
+                icon_rect = icon_text.get_rect(centerx=x + day_width // 2, y=y + 45)
+                screen.blit(icon_text, icon_rect)
             
             # 気温
             temp_max = forecast.get('temp_max', 0)
@@ -253,9 +337,19 @@ class SimpleWeatherRenderer:
             # 降水確率
             precip = forecast.get('precip_prob', 0)
             if precip > 0:
-                precip_text = f"雨 {precip}%"
+                # 雨滴アイコンを簡単な図形で描画
+                drop_x = x + day_width // 2 - 30
+                drop_y = y + 120
+                
+                # 水滴の形を描画
+                drop_color = (150, 200, 255)
+                pygame.draw.circle(screen, drop_color, (drop_x, drop_y), 3)
+                pygame.draw.polygon(screen, drop_color, 
+                                   [(drop_x-2, drop_y), (drop_x, drop_y-5), (drop_x+2, drop_y)])
+                
+                precip_text = f"{precip}%"
                 precip_surface = self.font.render(precip_text, True, (150, 200, 255))
-                precip_rect = precip_surface.get_rect(centerx=x + day_width // 2, y=y + 120)
+                precip_rect = precip_surface.get_rect(centerx=x + day_width // 2, y=y + 115)
                 screen.blit(precip_surface, precip_rect)
         
         # 最終更新時刻
