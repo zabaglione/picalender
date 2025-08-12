@@ -17,7 +17,9 @@ import traceback
 sys.path.insert(0, str(Path(__file__).parent))
 
 # 環境変数の設定（pygameの初期化前に設定が必要）
-os.environ.setdefault('SDL_VIDEODRIVER', 'kmsdrm')
+# Raspberry Pi環境の場合のみkmsdrmを設定
+if 'arm' in os.uname().machine or 'aarch64' in os.uname().machine:
+    os.environ.setdefault('SDL_VIDEODRIVER', 'kmsdrm')
 
 import pygame
 from src.core.config_manager import ConfigManager
@@ -38,7 +40,7 @@ from src.core.performance_optimizer import PerformanceOptimizer
 class PiCalendarApp:
     """PiCalendarメインアプリケーション"""
     
-    def __init__(self, config_path="settings.yaml"):
+    def __init__(self, config_path=None):
         """
         アプリケーションの初期化
         
@@ -48,13 +50,17 @@ class PiCalendarApp:
         self.running = False
         self.clock = pygame.time.Clock()
         
+        # 設定ファイルパスの決定
+        if config_path is None:
+            config_path = os.environ.get('PICALENDER_CONFIG', 'settings.yaml')
+        
         # 設定読み込み
         self.config_manager = ConfigManager(config_path)
-        self.settings = self.config_manager.settings
+        self.settings = self.config_manager._config
         
         # ログ設定
         self.log_manager = LogManager(self.settings)
-        self.logger = self.log_manager.logger
+        self.logger = self.log_manager.get_logger(__name__)
         
         self.logger.info("="*50)
         self.logger.info("PiCalendar Application Starting")
