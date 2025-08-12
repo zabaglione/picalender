@@ -354,8 +354,13 @@ class SimpleWeatherRenderer:
         
         # 最終更新時刻
         if self.last_update:
-            update_text = f"更新: {self.last_update.strftime('%H:%M')}"
-            update_surface = pygame.font.Font(None, 16).render(update_text, True, (150, 150, 150))
+            update_text = f"Updated: {self.last_update.strftime('%H:%M')}"
+            try:
+                # 小さいフォントを作成
+                small_font = pygame.font.SysFont('notosanscjkjp', 14)
+            except:
+                small_font = pygame.font.Font(None, 16)
+            update_surface = small_font.render(update_text, True, (150, 150, 150))
             update_rect = update_surface.get_rect(right=panel_x + panel_width - 10, 
                                                  bottom=panel_y + panel_height - 10)
             screen.blit(update_surface, update_rect)
