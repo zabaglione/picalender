@@ -337,19 +337,27 @@ class SimpleWeatherRenderer:
             # 降水確率
             precip = forecast.get('precip_prob', 0)
             if precip > 0:
-                # 雨滴アイコンを簡単な図形で描画
-                drop_x = x + day_width // 2 - 30
-                drop_y = y + 120
+                # より大きな雨滴アイコンを描画
+                drop_x = x + day_width // 2 - 25
+                drop_y = y + 118
                 
-                # 水滴の形を描画
+                # 水滴の形を描画（サイズを大きく）
                 drop_color = (150, 200, 255)
-                pygame.draw.circle(screen, drop_color, (drop_x, drop_y), 3)
+                # 下部の円（大きめ）
+                pygame.draw.circle(screen, drop_color, (drop_x, drop_y + 2), 6)
+                # 上部の三角形（水滴の先端）
                 pygame.draw.polygon(screen, drop_color, 
-                                   [(drop_x-2, drop_y), (drop_x, drop_y-5), (drop_x+2, drop_y)])
+                                   [(drop_x - 5, drop_y - 2), 
+                                    (drop_x, drop_y - 10), 
+                                    (drop_x + 5, drop_y - 2)])
+                # 内部を塗りつぶす
+                for i in range(1, 5):
+                    pygame.draw.circle(screen, drop_color, (drop_x, drop_y), i)
                 
+                # パーセンテージを右側に表示
                 precip_text = f"{precip}%"
                 precip_surface = self.font.render(precip_text, True, (150, 200, 255))
-                precip_rect = precip_surface.get_rect(centerx=x + day_width // 2, y=y + 115)
+                precip_rect = precip_surface.get_rect(left=drop_x + 12, centery=drop_y)
                 screen.blit(precip_surface, precip_rect)
         
         # 最終更新時刻
