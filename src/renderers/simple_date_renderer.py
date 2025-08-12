@@ -40,7 +40,8 @@ class SimpleDateRenderer:
         self.screen_height = screen_settings.get('height', 600)
         
         # 色設定
-        self.color = (200, 200, 200)  # ライトグレー
+        self.color = (255, 255, 255)  # 白（時計と同じ）
+        self.shadow_color = (10, 10, 20)  # 影の色
         
         # 更新間隔
         self.last_update = 0
@@ -61,7 +62,14 @@ class SimpleDateRenderer:
             text_surface = self.font.render(date_str, True, self.color)
             text_rect = text_surface.get_rect(center=(self.screen_width // 2, 170))
             
-            # 描画
+            # ドロップシャドウ
+            shadow_surface = self.font.render(date_str, True, self.shadow_color)
+            shadow_rect = text_rect.copy()
+            shadow_rect.x += 2  # 影のオフセット
+            shadow_rect.y += 2
+            
+            # 描画（影を先に、テキストを後に）
+            screen.blit(shadow_surface, shadow_rect)
             screen.blit(text_surface, text_rect)
             
         except Exception as e:
