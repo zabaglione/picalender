@@ -21,10 +21,12 @@ if 'arm' in os.uname().machine or 'aarch64' in os.uname().machine:
 
 import pygame
 
-# シンプルなレンダラーをインポート
-from src.renderers.simple_clock_renderer import SimpleClockRenderer
-from src.renderers.simple_date_renderer import SimpleDateRenderer
-from src.renderers.simple_calendar_renderer import SimpleCalendarRenderer
+# src.renderersパッケージを経由せずに直接インポート
+import sys
+sys.path.append(str(Path(__file__).parent / 'src' / 'renderers'))
+from simple_clock_renderer import SimpleClockRenderer
+from simple_date_renderer import SimpleDateRenderer
+from simple_calendar_renderer import SimpleCalendarRenderer
 
 
 class SimplePiCalendarApp:
