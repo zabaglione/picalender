@@ -56,9 +56,27 @@ cd picalender
 
 ### 3. 依存関係のインストール
 
+#### 方法1: 仮想環境を使用（推奨）
+
 ```bash
-# Python依存関係のインストール
-pip3 install -r requirements.txt
+# 仮想環境の作成
+python3 -m venv venv
+
+# 仮想環境の有効化
+source venv/bin/activate
+
+# 依存関係のインストール
+pip install -r requirements.txt
+```
+
+#### 方法2: システムワイドインストール
+
+```bash
+# Raspberry Pi OS (Bookworm以降)の場合
+pip3 install -r requirements.txt --break-system-packages
+
+# または、aptで個別にインストール
+sudo apt install -y python3-pygame python3-yaml python3-requests python3-pillow
 ```
 
 ### 4. 設定
@@ -92,7 +110,11 @@ sudo systemctl start picalender
 ### 手動起動
 
 ```bash
-# アプリケーションの起動
+# 仮想環境を使用している場合
+source venv/bin/activate
+python main.py
+
+# システムワイドインストールの場合
 python3 main.py
 
 # デバッグモードで起動
