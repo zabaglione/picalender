@@ -281,11 +281,11 @@ class SimpleWeatherRenderer:
             self._render_loading(screen)
             return
         
-        # 天気パネルの背景を描画
+        # 天気パネルの背景を描画（カレンダーと同じサイズに）
         panel_x = 24  # 左マージン
-        panel_y = screen.get_height() - 280 - 16  # 下から280px + 下マージン16px
-        panel_width = 420
-        panel_height = 280
+        panel_y = screen.get_height() - 280  # カレンダーと同じ高さ
+        panel_width = 350  # カレンダーと同じ幅
+        panel_height = 250  # カレンダーと同じ高さ
         
         # 半透明の背景パネル
         panel_surface = pygame.Surface((panel_width, panel_height))
@@ -302,11 +302,11 @@ class SimpleWeatherRenderer:
         title_rect = title_text.get_rect(centerx=panel_x + panel_width // 2, y=panel_y + 10)
         screen.blit(title_text, title_rect)
         
-        # 3日分の天気を横に並べて表示
+        # 3日分の天気を横に並べて表示（コンパクトに）
         day_width = panel_width // 3
         for i, forecast in enumerate(self.weather_data[:3]):
             x = panel_x + i * day_width
-            y = panel_y + 50
+            y = panel_y + 35  # タイトルとの間隔を縮小
             
             # 日付ラベル
             day_label = self._get_day_label(forecast['date'])
@@ -314,16 +314,17 @@ class SimpleWeatherRenderer:
             day_rect = day_text.get_rect(centerx=x + day_width // 2, y=y)
             screen.blit(day_text, day_rect)
             
-            # 天気アイコン（画像）
+            # 天気アイコン（画像）- サイズを少し小さく
             icon_name = self._get_weather_icon_name(forecast.get('weather_code', 0))
             if icon_name in self.weather_icons:
-                icon = self.weather_icons[icon_name]
-                icon_rect = icon.get_rect(centerx=x + day_width // 2, y=y + 30)
+                # アイコンを40x40に縮小
+                icon = pygame.transform.smoothscale(self.weather_icons[icon_name], (40, 40))
+                icon_rect = icon.get_rect(centerx=x + day_width // 2, y=y + 25)
                 screen.blit(icon, icon_rect)
             else:
                 # フォールバック：テキスト表示
                 icon_text = self.font.render(icon_name, True, (150, 200, 255))
-                icon_rect = icon_text.get_rect(centerx=x + day_width // 2, y=y + 45)
+                icon_rect = icon_text.get_rect(centerx=x + day_width // 2, y=y + 35)
                 screen.blit(icon_text, icon_rect)
             
             # 気温
@@ -331,7 +332,7 @@ class SimpleWeatherRenderer:
             temp_min = forecast.get('temp_min', 0)
             temp_text = f"{temp_max:.0f}° / {temp_min:.0f}°"
             temp_surface = self.font.render(temp_text, True, (255, 200, 100))
-            temp_rect = temp_surface.get_rect(centerx=x + day_width // 2, y=y + 85)
+            temp_rect = temp_surface.get_rect(centerx=x + day_width // 2, y=y + 70)
             screen.blit(temp_surface, temp_rect)
             
             # 降水確率
@@ -339,7 +340,7 @@ class SimpleWeatherRenderer:
             if precip > 0:
                 # より大きな雨滴アイコンを描画
                 drop_x = x + day_width // 2 - 25
-                drop_y = y + 125
+                drop_y = y + 100  # 位置を上に調整
                 
                 # 水滴の形を描画（サイズを大きく）
                 drop_color = (150, 200, 255)
@@ -376,9 +377,9 @@ class SimpleWeatherRenderer:
     def _render_loading(self, screen):
         """読み込み中表示"""
         panel_x = 24
-        panel_y = screen.get_height() - 280 - 16
-        panel_width = 420
-        panel_height = 280
+        panel_y = screen.get_height() - 280
+        panel_width = 350
+        panel_height = 250
         
         # 半透明の背景パネル
         panel_surface = pygame.Surface((panel_width, panel_height))
