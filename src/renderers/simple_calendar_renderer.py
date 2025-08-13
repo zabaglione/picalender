@@ -286,9 +286,9 @@ class SimpleCalendarRenderer:
                                 
                                 # 祝日名がある場合は下に、ない場合は日付の下に表示
                                 if self.show_holiday_names and self.jp_holidays and current_date in self.jp_holidays:
-                                    rokuyou_y = day_y + 24  # 祝日名の下（位置調整）
+                                    rokuyou_y = day_y + 26  # 祝日名の下（位置調整）
                                 else:
-                                    rokuyou_y = day_y + 12  # 日付の下
+                                    rokuyou_y = day_y + 15  # 日付の下（位置調整）
                                 
                                 rokuyou_rect = rokuyou_text.get_rect(center=(day_x, rokuyou_y))
                                 screen.blit(rokuyou_text, rokuyou_rect)
@@ -296,7 +296,7 @@ class SimpleCalendarRenderer:
                                 logger.debug(f"Failed to render rokuyou for {current_date}: {e}")
                                 pass  # 六曜表示エラーは無視
                 
-                day_y += 30
+                day_y += 38  # 行間を広げる（30→38）
             
         except Exception as e:
             logger.error(f"Failed to render calendar: {e}")

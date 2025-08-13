@@ -332,7 +332,7 @@ class SimpleWeatherRenderer:
             temp_min = forecast.get('temp_min', 0)
             temp_text = f"{temp_max:.0f}° / {temp_min:.0f}°"
             temp_surface = self.font.render(temp_text, True, (255, 200, 100))
-            temp_rect = temp_surface.get_rect(centerx=x + day_width // 2, y=y + 70)
+            temp_rect = temp_surface.get_rect(centerx=x + day_width // 2, y=y + 75)
             screen.blit(temp_surface, temp_rect)
             
             # 降水確率
@@ -340,7 +340,7 @@ class SimpleWeatherRenderer:
             if precip > 0:
                 # より大きな雨滴アイコンを描画
                 drop_x = x + day_width // 2 - 25
-                drop_y = y + 105  # 気温との間隔を広げる
+                drop_y = y + 115  # 気温との間隔をさらに広げる
                 
                 # 水滴の形を描画（サイズを大きく）
                 drop_color = (150, 200, 255)

@@ -190,9 +190,9 @@ class SimpleMoonRenderer:
                 
                 # 月齢を表示（背景付きで見やすく）
                 age_text = f"月齢 {moon_info['age']}"
-                logger.debug(f"Moon renderer: Drawing age text '{age_text}' at ({self.x}, {self.y + 45})")
+                logger.debug(f"Moon renderer: Drawing age text '{age_text}' at ({self.x}, {self.y + 50})")
                 age_surface = self.small_font.render(age_text, True, (255, 255, 200))
-                age_rect = age_surface.get_rect(center=(self.x, self.y + 45))
+                age_rect = age_surface.get_rect(center=(self.x, self.y + 50))
                 
                 # 背景を描画（半透明の黒）
                 padding = 4
@@ -206,9 +206,9 @@ class SimpleMoonRenderer:
                 
                 # 月相名も表示
                 phase_text = moon_info["phase_name"]
-                logger.debug(f"Moon renderer: Drawing phase text '{phase_text}' at ({self.x}, {self.y + 65})")
+                logger.debug(f"Moon renderer: Drawing phase text '{phase_text}' at ({self.x}, {self.y + 72})")
                 phase_surface = self.small_font.render(phase_text, True, (255, 255, 200))
-                phase_rect = phase_surface.get_rect(center=(self.x, self.y + 65))
+                phase_rect = phase_surface.get_rect(center=(self.x, self.y + 72))
                 
                 # 背景を描画
                 bg_rect2 = phase_rect.inflate(padding * 2, padding)
