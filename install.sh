@@ -63,12 +63,15 @@ echo -e "${YELLOW}5. 設定ファイルのセットアップ...${NC}"
 if [ ! -f "settings.yaml" ]; then
     if [ -f "settings.example.yaml" ]; then
         cp settings.example.yaml settings.yaml
-        echo -e "${GREEN}✓ 設定ファイルをコピーしました${NC}"
+        echo -e "${GREEN}✓ 設定ファイル(settings.yaml)を作成しました${NC}"
+        echo -e "${YELLOW}💡 場所設定を変更する場合は settings.yaml を編集してください${NC}"
     else
-        echo -e "${YELLOW}⚠ settings.example.yamlが見つかりません。既存のsettings.yamlを使用します${NC}"
+        echo -e "${RED}❌ settings.example.yamlが見つかりません${NC}"
+        exit 1
     fi
 else
     echo -e "${GREEN}✓ 設定ファイルは既に存在します${NC}"
+    echo -e "${YELLOW}💡 最新のサンプルと比較: diff settings.yaml settings.example.yaml${NC}"
 fi
 
 # ディレクトリの作成

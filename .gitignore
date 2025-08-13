@@ -58,8 +58,10 @@ logs/
 cache/
 
 # Config (local overrides)
+settings.yaml
 settings.local.yaml
 config.local.yaml
+settings.yaml.backup
 
 # Assets (user provided)
 assets/fonts/*.otf

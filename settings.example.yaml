@@ -1,5 +1,6 @@
 # PiCalendar 設定ファイル (サンプル)
 # このファイルを settings.yaml にコピーして使用してください
+# cp settings.example.yaml settings.yaml
 
 # 画面設定
 screen:
@@ -7,83 +8,80 @@ screen:
   height: 600              # 画面高さ（ピクセル）
   fps: 30                  # フレームレート
   fullscreen: true         # フルスクリーン表示
+  hide_cursor: true        # マウスカーソルを隠す
 
 # UI設定
 ui:
-  margins: 
+  margins:
     x: 24                  # 左右マージン
     y: 16                  # 上下マージン
   clock_font_px: 130       # 時計のフォントサイズ
   date_font_px: 36         # 日付のフォントサイズ
+  cal_font_px: 22          # カレンダーのフォントサイズ（旧名）
   calendar_font_px: 22     # カレンダーのフォントサイズ
   weather_font_px: 22      # 天気のフォントサイズ
+  colors:
+    text: [255, 255, 255]       # 通常テキスト色
+    sunday: [255, 100, 100]     # 日曜日の色
+    saturday: [100, 100, 255]   # 土曜日の色
+    weekday: [255, 255, 255]    # 平日の色
+    holiday: [255, 80, 80]      # 祝日の色
+    background: [0, 0, 0]       # 背景色
+    weather_panel: [40, 40, 40] # 天気パネルの背景色
+    weather_panel_alpha: 200    # 天気パネルの透明度
 
 # カレンダー設定
 calendar:
   first_weekday: "SUNDAY"  # 週の始まり (SUNDAY or MONDAY)
+  holidays_enabled: true   # 祝日表示のON/OFF
+  holidays_country: "JP"   # 国コード（JP=日本）
 
 # 背景設定
 background:
-  directory: "./wallpapers"  # 壁紙ディレクトリ
-  mode: "fit"                # 表示モード (fit, scale, fill, tile)
-  rescan_sec: 300            # 再スキャン間隔（秒）
+  dir: "./wallpapers"      # 壁紙ディレクトリ
+  mode: "fit"              # 表示モード (fit or fill)
+  rescan_sec: 300          # 壁紙切替間隔（秒）
 
 # 天気設定
 weather:
-  provider: "openmeteo"      # 天気プロバイダ (openmeteo, yahoo)
-  refresh_sec: 1800          # 更新間隔（秒）
+  provider: "openmeteo"    # 天気プロバイダ
+  refresh_sec: 1800        # 更新間隔（秒）= 30分
+  timeout_sec: 10          # タイムアウト（秒）
   location:
-    # 東京の座標（変更してください）
-    latitude: 35.681236
-    longitude: 139.767125
-  cache:
-    enabled: true            # キャッシュ有効化
-    directory: "./cache/weather"
-    ttl: 7200               # キャッシュ有効期限（秒）
-    max_size: 100           # 最大キャッシュエントリ数
+    # 東京の座標（お住まいの地域に変更してください）
+    lat: 35.681236         # 緯度
+    lon: 139.767125        # 経度
 
-# キャラクター設定
+# キャラクター設定（オプション）
 character:
-  enabled: false            # キャラクター表示（true で有効化）
-  sprite: "./assets/sprites/character_sheet.png"
-  frame_w: 128              # フレーム幅
-  frame_h: 128              # フレーム高さ
-  fps: 8                    # アニメーションFPS
+  enabled: false           # キャラクター表示（true で有効化）
+  sprite: "./assets/sprites/char_idle.png"
+  frame_width: 128         # フレーム幅
+  frame_height: 128        # フレーム高さ
+  fps: 8                   # アニメーションFPS
 
 # フォント設定
 fonts:
-  main: "./assets/fonts/NotoSansCJK-Regular.otf"
-  # フォールバック（システムフォント）
-  fallback: "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.otf"
+  main:
+    path: "./assets/fonts/NotoSansCJK-Regular.otf"
+    fallback: "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.otf"
 
 # ログ設定
 logging:
-  level: "INFO"             # ログレベル (DEBUG, INFO, WARNING, ERROR)
-  file: "./logs/picalender.log"
-  max_size: 10485760        # 最大ファイルサイズ（10MB）
-  backup_count: 5           # バックアップファイル数
+  level: "INFO"            # ログレベル (DEBUG, INFO, WARNING, ERROR)
+  format: "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 
-# パフォーマンス設定
-performance:
-  auto_adjust: true         # 自動品質調整
-  default_quality: "medium" # デフォルト品質 (ultra_low, low, medium, high)
-  monitor_interval: 10      # 監視間隔（秒）
-  thresholds:
-    cpu_high: 50            # CPU使用率上限（%）
-    memory_high: 200        # メモリ使用量上限（MB）
-    fps_low: 15             # 最低FPS
-
-# エラーリカバリ設定
-error_recovery:
-  enabled: true             # エラーリカバリ有効化
-  network:
-    max_retries: 3          # 最大リトライ回数
-    backoff_factor: 2.0     # バックオフ係数
-    max_backoff: 60         # 最大バックオフ時間（秒）
-  filesystem:
-    fallback_paths:         # フォールバックパス
-      - "/tmp"
-      - "/var/tmp"
-  memory:
-    threshold_mb: 50        # メモリ不足閾値（MB）
-    cleanup_aggressive: false  # アグレッシブクリーンアップ
+# 主要都市の座標（参考）
+# location設定の参考にしてください
+#
+# 東京:    lat: 35.681236, lon: 139.767125
+# 大阪:    lat: 34.693725, lon: 135.502254
+# 名古屋:  lat: 35.181446, lon: 136.906398
+# 札幌:    lat: 43.064301, lon: 141.346874
+# 仙台:    lat: 38.268215, lon: 140.869356
+# 横浜:    lat: 35.443707, lon: 139.638031
+# 京都:    lat: 35.011635, lon: 135.768036
+# 神戸:    lat: 34.690083, lon: 135.195511
+# 広島:    lat: 34.396033, lon: 132.459622
+# 福岡:    lat: 33.590355, lon: 130.401716
+# 那覇:    lat: 26.212401, lon: 127.680932

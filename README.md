@@ -86,7 +86,7 @@ sudo apt install -y python3-pygame python3-yaml python3-requests python3-pillow
 # 設定ファイルのコピー（初回のみ）
 cp settings.example.yaml settings.yaml
 
-# 設定の編集
+# 設定の編集（必須：場所の座標を変更）
 nano settings.yaml
 ```
 
