@@ -12,13 +12,14 @@ PiCalendarは、Raspberry Pi Zero 2 W向けに設計された常時表示型の�
 
 ### 主な機能
 
-- 🕐 **デジタル時計** - 大きく見やすいデジタル時計表示
-- 📅 **カレンダー** - 当月のカレンダーを日曜始まりで表示
-- 🌤️ **天気予報** - 3日分の天気予報を表示（Open-Meteo対応）
-- 🎭 **2Dキャラクター** - カスタマイズ可能なアニメーションキャラクター
-- 🖼️ **背景画像** - 壁紙のローテーション表示
-- ⚡ **軽量動作** - Raspberry Pi Zero 2 Wで快適に動作
-- 🔄 **自動起動** - systemdサービスによる自動起動
+- 🕐 **デジタル時計** - 大きく見やすいデジタル時計表示（影付き、固定位置描画でズレなし）
+- 📅 **カレンダー** - 当月のカレンダーを日曜始まりで表示（曜日色分け対応）
+- 🌤️ **天気予報** - 3日分の天気予報を画像アイコンで表示（Open-Meteo対応、オフラインキャッシュ機能）
+- 🎨 **テーマシステム** - 5種類のプリセットテーマ（default/compact/night/colorful/minimal）
+- 🖼️ **背景画像** - 壁紙の自動ローテーション表示（5分間隔で切替可能）
+- 🚀 **X Window対応** - KMSDRM/X11両対応、デスクトップ環境でも動作
+- ⚡ **軽量動作** - Raspberry Pi Zero 2 Wで快適に動作（CPU使用率30%以下）
+- 🔄 **自動起動** - systemdサービスによる自動起動、仮想環境対応
 
 ## 動作環境
 
@@ -117,8 +118,21 @@ python main.py
 # システムワイドインストールの場合
 python3 main.py
 
+# X Window環境で起動
+python3 main_x11.py
+
 # デバッグモードで起動
 python3 main.py --debug
+```
+
+### クイック再起動
+
+```bash
+# 簡単再起動スクリプト（仮想環境自動検出）
+./quick_restart.sh
+
+# または従来のrestart.sh
+./restart.sh
 ```
 
 ### サービス管理
@@ -161,23 +175,54 @@ ui:
 weather:
   provider: openmeteo
   location: 
-    latitude: 35.681236
-    longitude: 139.767125
-  refresh_sec: 1800
+    lat: 35.681236    # 緯度
+    lon: 139.767125   # 経度
+  refresh_sec: 1800   # 30分ごとに更新
 
-# キャラクター設定
+# キャラクター設定（現在無効）
 character:
-  enabled: true
+  enabled: false
   sprite: ./assets/sprites/char_idle.png
-  frame_w: 128
-  frame_h: 128
+  frame_width: 128
+  frame_height: 128
   fps: 8
 
-# 背景設定
+# 壁紙設定
 background:
-  directory: ./wallpapers
-  mode: fit
-  rescan_sec: 300
+  dir: ./wallpapers
+  mode: fit           # fit または fill
+  rescan_sec: 300     # 5分ごとに切替
+```
+
+## テーマ機能
+
+### テーマの適用
+
+```bash
+# 利用可能なテーマを表示
+python3 theme_manager.py list
+
+# テーマを適用（例：ナイトモード）
+python3 theme_manager.py apply night
+./quick_restart.sh
+
+# 現在のテーマを確認
+python3 theme_manager.py current
+```
+
+### プリセットテーマ
+
+- **default** - 標準的な表示設定
+- **compact** - 小さいフォントで情報を詰めて表示
+- **night** - 暗めの配色で夜間向け
+- **colorful** - 明るく鮮やかな配色
+- **minimal** - 必要最小限の情報のみ
+
+### カスタムテーマの作成
+
+```bash
+# 現在の設定をテーマとして保存
+python3 theme_manager.py create my_theme -d "私のカスタムテーマ"
 ```
 
 ## カスタマイズ
