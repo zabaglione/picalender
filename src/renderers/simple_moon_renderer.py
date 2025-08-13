@@ -73,14 +73,17 @@ class SimpleMoonRenderer:
             if self.font_file:
                 self.font = pygame.font.Font(self.font_file, self.font_size)
                 self.small_font = pygame.font.Font(self.font_file, self.small_font_size)
+                logger.info(f"Moon renderer: Using font file {self.font_file}")
             else:
                 # ファイルが見つからない場合はSysFontを使用
                 self.font = pygame.font.SysFont('notosanscjkjp', self.font_size)
                 self.small_font = pygame.font.SysFont('notosanscjkjp', self.small_font_size)
+                logger.warning(f"Moon renderer: Using system font (no file found)")
         except Exception as e:
             logger.warning(f"Failed to create font: {e}")
             self.font = pygame.font.Font(None, self.font_size)
             self.small_font = pygame.font.Font(None, self.small_font_size)
+            logger.error(f"Moon renderer: Using default font (Japanese may not display)")
         
         # 位置を計算
         self._calculate_position()
@@ -174,6 +177,7 @@ class SimpleMoonRenderer:
                 
                 # 月齢を表示（背景付きで見やすく）
                 age_text = f"月齢 {moon_info['age']}"
+                logger.debug(f"Moon renderer: Drawing age text '{age_text}' at ({self.x}, {self.y + 45})")
                 age_surface = self.small_font.render(age_text, True, (255, 255, 200))
                 age_rect = age_surface.get_rect(center=(self.x, self.y + 45))
                 
@@ -189,6 +193,7 @@ class SimpleMoonRenderer:
                 
                 # 月相名も表示
                 phase_text = moon_info["phase_name"]
+                logger.debug(f"Moon renderer: Drawing phase text '{phase_text}' at ({self.x}, {self.y + 65})")
                 phase_surface = self.small_font.render(phase_text, True, (255, 255, 200))
                 phase_rect = phase_surface.get_rect(center=(self.x, self.y + 65))
                 
