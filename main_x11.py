@@ -41,6 +41,7 @@ from simple_date_renderer import SimpleDateRenderer
 from simple_calendar_renderer import SimpleCalendarRenderer
 from simple_weather_renderer import SimpleWeatherRenderer
 from simple_wallpaper_renderer import SimpleWallpaperRenderer
+from simple_moon_renderer import SimpleMoonRenderer
 
 
 class PiCalendarApp:
@@ -205,6 +206,14 @@ class PiCalendarApp:
                 self.logger.info("Weather renderer initialized")
             except Exception as e:
                 self.logger.error(f"Failed to initialize weather renderer: {e}")
+            
+            # 月相レンダラー
+            try:
+                moon_renderer = SimpleMoonRenderer(self.settings)
+                self.renderers.append(('moon', moon_renderer))
+                self.logger.info("Moon phase renderer initialized")
+            except Exception as e:
+                self.logger.error(f"Failed to initialize moon renderer: {e}")
             
             self.logger.info("Initialization complete")
             return True
