@@ -454,7 +454,7 @@ class SimpleWeatherRenderer:
         # カレンダーレンダラーと同じ計算ロジック（更新版）
         base_height = 80
         row_height = 48  # カレンダーと同期（さらに広げた版）
-        bottom_margin = 5   # カレンダーと同期して削減
+        bottom_margin = 15  # カレンダーと同期して上部と統一
         
         calculated_height = base_height + (num_weeks * row_height) + bottom_margin
         

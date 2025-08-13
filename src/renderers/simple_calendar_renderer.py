@@ -190,7 +190,7 @@ class SimpleCalendarRenderer:
         # 基本サイズ計算（六曜・祝日名を考慮）
         base_height = 80   # ヘッダー部分（月名+曜日）
         row_height = 48    # 各行の高さ（日付＋六曜＋祝日名のスペース）- さらに広げる
-        bottom_margin = 5   # 下部余白を削減
+        bottom_margin = 15  # 下部余白を上部と同じ15pxに統一
         
         # 高さ計算
         calculated_height = base_height + (num_weeks * row_height) + bottom_margin
