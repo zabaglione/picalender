@@ -45,6 +45,7 @@ class SimpleCalendarRenderer:
         # フォントサイズ（旧名と新名の両方をサポート）
         self.font_size = ui_settings.get('cal_font_px', ui_settings.get('calendar_font_px', 22))
         self.small_font_size = max(self.font_size - 6, 12)
+        self.tiny_font_size = 10  # 祝日名・六曜用の極小フォント
         
         # フォント初期化（settings.yamlの設定を使用）
         font_config = self.settings.get('fonts', {}).get('main', {})
@@ -77,6 +78,7 @@ class SimpleCalendarRenderer:
             if self.font_file:
                 self.font = pygame.font.Font(self.font_file, self.font_size)
                 self.small_font = pygame.font.Font(self.font_file, self.small_font_size)
+                self.tiny_font = pygame.font.Font(self.font_file, self.tiny_font_size)
             else:
                 # ファイルが見つからない場合はSysFontを使用
                 logger.warning(f"No font files found in standard locations")
@@ -86,6 +88,7 @@ class SimpleCalendarRenderer:
                     try:
                         self.font = pygame.font.SysFont(font_name, self.font_size)
                         self.small_font = pygame.font.SysFont(font_name, self.small_font_size)
+                        self.tiny_font = pygame.font.SysFont(font_name, self.tiny_font_size)
                         logger.info(f"Using system font: {font_name}")
                         break
                     except:
@@ -95,6 +98,7 @@ class SimpleCalendarRenderer:
             # 最終的なフォールバック
             self.font = pygame.font.Font(None, self.font_size)
             self.small_font = pygame.font.Font(None, self.small_font_size)
+            self.tiny_font = pygame.font.Font(None, self.tiny_font_size)
         
         # 位置設定
         screen_settings = self.settings.get('screen', {})
@@ -244,6 +248,10 @@ class SimpleCalendarRenderer:
             logger.error("Calendar renderer: Font not initialized, skipping render")
             return
         
+        # tiny_fontが初期化されていない場合は作成
+        if not hasattr(self, 'tiny_font') or self.tiny_font is None:
+            self.tiny_font = self.small_font  # フォールバック
+        
         try:
             now = datetime.now()
             
@@ -319,13 +327,8 @@ class SimpleCalendarRenderer:
                             
                             # さらに小さいフォントで祝日名を表示
                             try:
-                                # 同じフォントファイルを使用
-                                if self.font_file:
-                                    tiny_font = pygame.font.Font(self.font_file, 14)
-                                else:
-                                    tiny_font = pygame.font.SysFont('notosanscjkjp', 14)
-                                holiday_text = tiny_font.render(holiday_name, True, self.holiday_color)
-                                holiday_rect = holiday_text.get_rect(center=(day_x, day_y + 12))
+                                holiday_text = self.tiny_font.render(holiday_name, True, self.holiday_color)
+                                holiday_rect = holiday_text.get_rect(center=(day_x, day_y + 10))
                                 screen.blit(holiday_text, holiday_rect)
                             except:
                                 pass  # フォントエラーは無視
@@ -335,19 +338,14 @@ class SimpleCalendarRenderer:
                             try:
                                 rokuyou_name = get_rokuyou_name(current_date, self.rokuyou_format)
                                 
-                                # 六曜表示用のフォント（同じフォントファイルを使用）
-                                if self.font_file:
-                                    tiny_font = pygame.font.Font(self.font_file, 14)
-                                else:
-                                    tiny_font = pygame.font.SysFont('notosanscjkjp', 14)
                                 rokuyou_color = get_rokuyou_color(current_date)
-                                rokuyou_text = tiny_font.render(rokuyou_name, True, rokuyou_color)
+                                rokuyou_text = self.tiny_font.render(rokuyou_name, True, rokuyou_color)
                                 
                                 # 祝日名がある場合は下に、ない場合は日付の下に表示
                                 if self.show_holiday_names and self.jp_holidays and current_date in self.jp_holidays:
-                                    rokuyou_y = day_y + 26  # 祝日名の下（位置調整）
+                                    rokuyou_y = day_y + 18  # 祝日名の下（位置調整、よりコンパクトに）
                                 else:
-                                    rokuyou_y = day_y + 15  # 日付の下（位置調整）
+                                    rokuyou_y = day_y + 10  # 日付の下（位置調整）
                                 
                                 rokuyou_rect = rokuyou_text.get_rect(center=(day_x, rokuyou_y))
                                 screen.blit(rokuyou_text, rokuyou_rect)
