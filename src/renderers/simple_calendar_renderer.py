@@ -183,23 +183,17 @@ class SimpleCalendarRenderer:
         cal_obj = cal.monthcalendar(now.year, now.month)
         num_weeks = len(cal_obj)
         
-        # 基本サイズ計算
-        base_height = 120  # ヘッダー部分（月名+曜日）
-        row_height = 42    # 各行の高さ（設定と同期）
-        bottom_margin = 20  # 下部余白
+        # 基本サイズ計算（よりコンパクトに）
+        base_height = 80   # ヘッダー部分（月名+曜日）を縮小
+        row_height = 36    # 各行の高さを縮小（六曜含む）
+        bottom_margin = 10  # 下部余白を縮小
         
-        # 六曜や祝日名が表示される場合の追加高さ
-        extra_height_per_row = 0
-        if hasattr(self, 'rokuyou_enabled') and self.rokuyou_enabled and hasattr(self, 'show_rokuyou_names') and self.show_rokuyou_names:
-            extra_height_per_row += 15  # 六曜分
-        if hasattr(self, 'jp_holidays') and self.jp_holidays and hasattr(self, 'show_holiday_names') and self.show_holiday_names:
-            extra_height_per_row += 15  # 祝日名分
+        # 六曜表示の場合も行高さに含まれているため、追加高さは不要
+        calculated_height = base_height + (num_weeks * row_height) + bottom_margin
         
-        calculated_height = base_height + (num_weeks * (row_height + extra_height_per_row)) + bottom_margin
-        
-        # 最小・最大制限
-        min_height = 280
-        max_height = 400
+        # 最小・最大制限（よりコンパクトに）
+        min_height = 250
+        max_height = 330
         final_height = max(min_height, min(max_height, calculated_height))
         
         logger.info(f"Calendar dynamic sizing: {num_weeks} weeks, calculated={calculated_height}px, final={final_height}px")
@@ -207,32 +201,32 @@ class SimpleCalendarRenderer:
     
     def _calculate_position(self, position: str, x_offset: int, y_offset: int):
         """位置を計算"""
-        # 基本位置を決定
+        # 基本位置を決定（デフォルトマージンなし、オフセットで調整）
         if position == "top-left":
-            base_x = 30
-            base_y = 30
+            base_x = 0
+            base_y = 0
         elif position == "top-center":
             base_x = (self.screen_width - self.cal_width) // 2
-            base_y = 30
+            base_y = 0
         elif position == "top-right":
-            base_x = self.screen_width - self.cal_width - 30
-            base_y = 30
+            base_x = self.screen_width - self.cal_width
+            base_y = 0
         elif position == "center":
             base_x = (self.screen_width - self.cal_width) // 2
             base_y = (self.screen_height - self.cal_height) // 2
         elif position == "bottom-left":
-            base_x = 30
-            base_y = self.screen_height - self.cal_height - 30
+            base_x = 0
+            base_y = self.screen_height - self.cal_height
         elif position == "bottom-center":
             base_x = (self.screen_width - self.cal_width) // 2
-            base_y = self.screen_height - self.cal_height - 30
+            base_y = self.screen_height - self.cal_height
         elif position == "bottom-right":
-            base_x = self.screen_width - self.cal_width - 30
-            base_y = self.screen_height - self.cal_height - 30
+            base_x = self.screen_width - self.cal_width
+            base_y = self.screen_height - self.cal_height
         else:
             # デフォルト: 右下
-            base_x = self.screen_width - self.cal_width - 30
-            base_y = self.screen_height - self.cal_height - 30
+            base_x = self.screen_width - self.cal_width
+            base_y = self.screen_height - self.cal_height
         
         # オフセットを適用
         self.cal_x = base_x + x_offset
@@ -261,7 +255,7 @@ class SimpleCalendarRenderer:
             # カレンダーヘッダー（月年）
             month_year = now.strftime("%B %Y")
             month_text = self.font.render(month_year, True, self.text_color)
-            month_rect = month_text.get_rect(center=(self.cal_x + self.cal_width // 2, self.cal_y + 20))
+            month_rect = month_text.get_rect(center=(self.cal_x + self.cal_width // 2, self.cal_y + 15))
             screen.blit(month_text, month_rect)
             
             # 曜日ヘッダー
@@ -278,14 +272,14 @@ class SimpleCalendarRenderer:
                 
                 day_text = self.small_font.render(day, True, color)
                 day_x = self.cal_x + i * day_width + day_width // 2
-                day_rect = day_text.get_rect(center=(day_x, self.cal_y + 50))
+                day_rect = day_text.get_rect(center=(day_x, self.cal_y + 40))
                 screen.blit(day_text, day_rect)
             
             # カレンダー日付（日曜日始まりに設定）
             # calendarモジュールを日曜日始まりに設定
             calendar.setfirstweekday(calendar.SUNDAY)
             cal_obj = calendar.monthcalendar(now.year, now.month)
-            day_y = self.cal_y + 85  # カレンダー開始位置を少し下に
+            day_y = self.cal_y + 65  # カレンダー開始位置（よりコンパクトに）
             
             for week in cal_obj:
                 for i, day in enumerate(week):
@@ -361,7 +355,7 @@ class SimpleCalendarRenderer:
                                 logger.debug(f"Failed to render rokuyou for {current_date}: {e}")
                                 pass  # 六曜表示エラーは無視
                 
-                day_y += 42  # 行間をさらに広げる（38→42）
+                day_y += 36  # 行間を適切に（動的高さ計算と同期）
             
         except Exception as e:
             logger.error(f"Failed to render calendar: {e}")

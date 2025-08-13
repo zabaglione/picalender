@@ -320,8 +320,15 @@ class SimpleWeatherRenderer:
         # 天気パネルの背景を描画（カレンダーと同じサイズに動的調整）
         panel_width = 350  # カレンダーと同じ幅
         panel_height = self._get_calendar_height()  # カレンダー高さを動的取得
-        panel_x = 24  # 左マージン
-        panel_y = screen.get_height() - panel_height - 30  # 下部余白30px
+        
+        # レイアウト設定から位置を取得（デフォルト値）
+        layout = self.settings.get('layout', {}).get('weather', {})
+        x_offset = layout.get('x_offset', 30)
+        y_offset = layout.get('y_offset', -30)
+        
+        # パネル位置（画面下端から配置、オフセット適用）
+        panel_x = x_offset if x_offset > 0 else x_offset  # 左側配置
+        panel_y = screen.get_height() - panel_height + y_offset  # 下端からのオフセット
         
         # 半透明の背景パネル
         panel_surface = pygame.Surface((panel_width, panel_height))
@@ -444,17 +451,16 @@ class SimpleWeatherRenderer:
         cal_obj = cal.monthcalendar(now.year, now.month)
         num_weeks = len(cal_obj)
         
-        # カレンダーレンダラーと同じ計算ロジック
-        base_height = 120
-        row_height = 42
-        bottom_margin = 20
-        extra_height_per_row = 15  # 六曜・祝日分の概算
+        # カレンダーレンダラーと同じ計算ロジック（更新版）
+        base_height = 80
+        row_height = 36
+        bottom_margin = 10
         
-        calculated_height = base_height + (num_weeks * (row_height + extra_height_per_row)) + bottom_margin
+        calculated_height = base_height + (num_weeks * row_height) + bottom_margin
         
-        # 最小・最大制限
-        min_height = 280
-        max_height = 400
+        # 最小・最大制限（更新版）
+        min_height = 250
+        max_height = 330
         return max(min_height, min(max_height, calculated_height))
     
     def cleanup(self):
