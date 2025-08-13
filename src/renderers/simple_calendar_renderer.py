@@ -8,7 +8,6 @@ import calendar
 from datetime import datetime, date
 from typing import Dict, Any, Optional
 import logging
-from pathlib import Path
 
 # 祝日ライブラリをオプショナルにインポート
 try:
@@ -47,33 +46,35 @@ class SimpleCalendarRenderer:
         self.font_size = ui_settings.get('cal_font_px', ui_settings.get('calendar_font_px', 22))
         self.small_font_size = max(self.font_size - 6, 12)
         
-        # フォント初期化（日本語対応）
-        self.font_path = None
+        # フォント初期化（settings.yamlの設定を使用）
+        font_config = self.settings.get('fonts', {}).get('main', {})
+        font_path = font_config.get('path', './assets/fonts/NotoSansCJK-Regular.otf')
+        font_fallback = font_config.get('fallback', '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.otf')
         
-        # 日本語フォントを検索
-        font_candidates = [
-            "/System/Library/Fonts/ヒラギノ角ゴシック W3.ttc",
-            "/System/Library/Fonts/ヒラギノ角ゴシック W6.ttc",
-            "/System/Library/Fonts/Helvetica.ttc",  # フォールバック
-        ]
+        # フォントファイルを探す
+        self.font_file = None
+        from pathlib import Path
         
-        for font_path in font_candidates:
-            if Path(font_path).exists():
-                self.font_path = font_path
+        # 設定されたパスをチェック
+        for path in [font_path, font_fallback]:
+            if Path(path).exists():
+                self.font_file = path
+                logger.info(f"Using font file: {path}")
                 break
         
+        # フォントを初期化
         try:
-            if self.font_path:
-                self.font = pygame.font.Font(self.font_path, self.font_size)
-                self.small_font = pygame.font.Font(self.font_path, self.small_font_size)
-                logger.info(f"Using font: {self.font_path}")
+            if self.font_file:
+                self.font = pygame.font.Font(self.font_file, self.font_size)
+                self.small_font = pygame.font.Font(self.font_file, self.small_font_size)
             else:
-                # フォールバック：システムフォント
-                self.font = pygame.font.SysFont('notosansjp,hiragino,arial', self.font_size)
-                self.small_font = pygame.font.SysFont('notosansjp,hiragino,arial', self.small_font_size)
-                logger.info("Using system font with Japanese support")
+                # ファイルが見つからない場合はSysFontを使用
+                logger.warning(f"Font files not found: {font_path}, {font_fallback}")
+                logger.info("Falling back to system font")
+                self.font = pygame.font.SysFont('notosanscjkjp', self.font_size)
+                self.small_font = pygame.font.SysFont('notosanscjkjp', self.small_font_size)
         except Exception as e:
-            logger.warning(f"Failed to create fonts: {e}")
+            logger.warning(f"Failed to create font: {e}")
             self.font = pygame.font.Font(None, self.font_size)
             self.small_font = pygame.font.Font(None, self.small_font_size)
         
@@ -219,11 +220,11 @@ class SimpleCalendarRenderer:
                             
                             # さらに小さいフォントで祝日名を表示
                             try:
-                                # 日本語フォントを使用
-                                if self.font_path:
-                                    tiny_font = pygame.font.Font(self.font_path, 14)
+                                # 同じフォントファイルを使用
+                                if self.font_file:
+                                    tiny_font = pygame.font.Font(self.font_file, 14)
                                 else:
-                                    tiny_font = pygame.font.SysFont('notosansjp,hiragino,arial', 14)
+                                    tiny_font = pygame.font.SysFont('notosanscjkjp', 14)
                                 holiday_text = tiny_font.render(holiday_name, True, self.holiday_color)
                                 holiday_rect = holiday_text.get_rect(center=(day_x, day_y + 12))
                                 screen.blit(holiday_text, holiday_rect)
@@ -235,11 +236,11 @@ class SimpleCalendarRenderer:
                             try:
                                 rokuyou_name = get_rokuyou_name(current_date, self.rokuyou_format)
                                 
-                                # 六曜表示用のフォント（日本語対応）
-                                if self.font_path:
-                                    tiny_font = pygame.font.Font(self.font_path, 14)
+                                # 六曜表示用のフォント（同じフォントファイルを使用）
+                                if self.font_file:
+                                    tiny_font = pygame.font.Font(self.font_file, 14)
                                 else:
-                                    tiny_font = pygame.font.SysFont('notosansjp,hiragino,arial', 14)
+                                    tiny_font = pygame.font.SysFont('notosanscjkjp', 14)
                                 rokuyou_color = get_rokuyou_color(current_date)
                                 rokuyou_text = tiny_font.render(rokuyou_name, True, rokuyou_color)
                                 
