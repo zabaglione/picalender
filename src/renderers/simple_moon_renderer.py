@@ -168,6 +168,16 @@ class SimpleMoonRenderer:
                 age_rect = age_surface.get_rect(center=(self.x, self.y + 20))
                 screen.blit(age_surface, age_rect)
                 
+            elif self.moon_phase_format == "graphic":
+                # グラフィック形式（円を描画）
+                self._draw_moon_graphic(screen, moon_info, self.x, self.y)
+                
+                # 月齢を表示
+                age_text = f"月齢 {moon_info['age']}"
+                age_surface = self.small_font.render(age_text, True, (200, 200, 200))
+                age_rect = age_surface.get_rect(center=(self.x, self.y + 45))
+                screen.blit(age_surface, age_rect)
+                
             elif self.moon_phase_format == "ascii":
                 # ASCII形式
                 moon_text = moon_info["ascii"]
@@ -184,6 +194,95 @@ class SimpleMoonRenderer:
             
         except Exception as e:
             logger.error(f"Failed to render moon phase: {e}")
+    
+    def _draw_moon_graphic(self, screen: pygame.Surface, moon_info: Dict, x: int, y: int) -> None:
+        """
+        月をグラフィカルに描画
+        
+        Args:
+            screen: 描画対象のサーフェース
+            moon_info: 月情報
+            x: X座標
+            y: Y座標
+        """
+        import math
+        
+        radius = 30  # 月の半径
+        moon_age = moon_info["age"]
+        
+        # 月の外枠（明るい円）を描画
+        moon_color = (255, 255, 200)  # 薄い黄色
+        shadow_color = (40, 40, 50)   # 暗い影の色
+        
+        # 背景の暗い円を描画
+        pygame.draw.circle(screen, shadow_color, (x, y), radius + 2)
+        
+        # 月齢に応じて描画を変える
+        # 月齢0-29.53を0-2πに変換
+        phase_angle = (moon_age / 29.53) * 2 * math.pi
+        
+        if moon_age < 1.84:  # 新月
+            # 全体を暗く
+            pygame.draw.circle(screen, shadow_color, (x, y), radius)
+            # 細い輪郭線
+            pygame.draw.circle(screen, (60, 60, 60), (x, y), radius, 1)
+            
+        elif moon_age < 7.38:  # 三日月〜上弦
+            # 右側を明るく
+            pygame.draw.circle(screen, moon_color, (x, y), radius)
+            # 左側に影を描画（楕円で表現）
+            shadow_width = int(radius * 2 * (1 - (moon_age - 1.84) / 5.54))
+            if shadow_width > 0:
+                shadow_rect = pygame.Rect(x - radius, y - radius, shadow_width, radius * 2)
+                pygame.draw.ellipse(screen, shadow_color, shadow_rect)
+            
+        elif moon_age < 14.77:  # 上弦〜満月
+            # 全体を明るく
+            pygame.draw.circle(screen, moon_color, (x, y), radius)
+            # 左側の影を徐々に小さく
+            if moon_age < 13:
+                shadow_width = int(radius * (1 - (moon_age - 7.38) / 7.39))
+                if shadow_width > 0:
+                    shadow_surface = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+                    # 円の左端から影を描画
+                    for i in range(shadow_width):
+                        alpha = int(200 * (1 - i / shadow_width))
+                        pygame.draw.arc(shadow_surface, (*shadow_color, alpha), 
+                                      (i, 0, radius * 2 - i * 2, radius * 2), 
+                                      math.pi/2, 3*math.pi/2, 1)
+                    screen.blit(shadow_surface, (x - radius, y - radius))
+                    
+        elif moon_age < 16.61:  # 満月
+            # 全体を明るく
+            pygame.draw.circle(screen, moon_color, (x, y), radius)
+            # 少しハイライトを追加
+            pygame.draw.circle(screen, (255, 255, 220), (x - 5, y - 5), radius // 3)
+            
+        elif moon_age < 22.15:  # 寝待月〜下弦
+            # 全体を明るく
+            pygame.draw.circle(screen, moon_color, (x, y), radius)
+            # 右側に影を描画
+            shadow_width = int(radius * 2 * ((moon_age - 16.61) / 5.54))
+            if shadow_width > 0:
+                shadow_rect = pygame.Rect(x + radius - shadow_width, y - radius, shadow_width, radius * 2)
+                pygame.draw.ellipse(screen, shadow_color, shadow_rect)
+                
+        elif moon_age < 27.68:  # 下弦〜有明月
+            # 左側を明るく
+            pygame.draw.circle(screen, moon_color, (x, y), radius)
+            # 右側を暗く（楕円で表現）
+            shadow_width = int(radius * 2 * (1 - (27.68 - moon_age) / 5.53))
+            if shadow_width > 0:
+                shadow_rect = pygame.Rect(x, y - radius, radius + shadow_width // 2, radius * 2)
+                pygame.draw.ellipse(screen, shadow_color, shadow_rect)
+                
+        else:  # 新月に近づく
+            # 全体を暗めに
+            pygame.draw.circle(screen, (100, 100, 80), (x, y), radius)
+            pygame.draw.circle(screen, (60, 60, 60), (x, y), radius, 1)
+        
+        # 輪郭線を描画
+        pygame.draw.circle(screen, (200, 200, 180), (x, y), radius, 1)
     
     def should_update(self) -> bool:
         """

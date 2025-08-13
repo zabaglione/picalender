@@ -63,7 +63,7 @@ calendar:
   show_rokuyou_names: true # 六曜名の表示（true=表示, false=色のみ）
   rokuyou_format: "single" # 六曜の表示形式（"full", "short", "single"）
   moon_phase_enabled: true # 月相表示のON/OFF
-  moon_phase_format: "emoji" # 月相の表示形式（"emoji", "text", "ascii"）
+  moon_phase_format: "graphic" # 月相の表示形式（"emoji", "text", "ascii", "graphic"）
 
 # 背景設定
 background:
