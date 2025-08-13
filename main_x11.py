@@ -303,31 +303,36 @@ class PiCalendarApp:
                 # 秒が変わったら時計を更新
                 if local_time.tm_sec != last_second:
                     last_second = local_time.tm_sec
+                    
+                    # 時計部分の背景をクリア（グラデーション背景で上書き）
+                    self.draw_gradient_background(self.screen)
+                    
+                    # 全レンダラーを再描画（秒更新時も全体を更新）
                     for name, renderer in self.renderers:
-                        if name == 'clock':
-                            try:
-                                renderer.render(self.screen)
-                                last_update_times[name] = current_time
-                                need_update = True
-                            except Exception as e:
-                                self.logger.error(f"Clock update failed: {e}")
-                            break
+                        try:
+                            renderer.render(self.screen)
+                            last_update_times[name] = current_time
+                        except Exception as e:
+                            self.logger.error(f"{name} update failed: {e}")
+                    
+                    need_update = True
                 
-                # 分が変わったら日付とカレンダーを更新
-                if local_time.tm_min != last_minute:
+                # 分が変わったら日付とカレンダーを更新（秒更新と重複しないように）
+                elif local_time.tm_min != last_minute:
                     last_minute = local_time.tm_min
                     
                     # 背景を再描画（分単位の更新時のみ）
                     self.draw_gradient_background(self.screen)
                     
+                    # 全レンダラーを再描画
                     for name, renderer in self.renderers:
-                        if name in ['date', 'calendar', 'clock']:
-                            try:
-                                renderer.render(self.screen)
-                                last_update_times[name] = current_time
-                                need_update = True
-                            except Exception as e:
-                                self.logger.error(f"{name} update failed: {e}")
+                        try:
+                            renderer.render(self.screen)
+                            last_update_times[name] = current_time
+                        except Exception as e:
+                            self.logger.error(f"{name} update failed: {e}")
+                    
+                    need_update = True
                 
                 # その他のレンダラーは設定された間隔で更新
                 update_intervals = {
