@@ -5,9 +5,16 @@ AssetManagerに依存しない実装
 
 import pygame
 import calendar
-from datetime import datetime
+from datetime import datetime, date
 from typing import Dict, Any, Optional
 import logging
+
+# 祝日ライブラリをオプショナルにインポート
+try:
+    import holidays
+    HOLIDAYS_AVAILABLE = True
+except ImportError:
+    HOLIDAYS_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -50,16 +57,33 @@ class SimpleCalendarRenderer:
         self.cal_height = 250
         
         # 色設定
+        colors = ui_settings.get('colors', {})
         self.bg_color = (20, 20, 30, 200)
-        self.text_color = (255, 255, 255)
-        self.sunday_color = (255, 100, 100)
-        self.saturday_color = (100, 100, 255)
+        self.text_color = tuple(colors.get('text', [255, 255, 255]))
+        self.sunday_color = tuple(colors.get('sunday', [255, 100, 100]))
+        self.saturday_color = tuple(colors.get('saturday', [100, 100, 255]))
         self.today_color = (255, 255, 100)
         self.today_bg_color = (255, 255, 100)
+        self.holiday_color = tuple(colors.get('holiday', [255, 80, 80]))  # 祝日の色
         
         # 更新間隔
         self.last_update = 0
         self.update_interval = 60.0  # 1分ごと
+        
+        # 祝日設定
+        self.holidays_enabled = self.settings.get('calendar', {}).get('holidays_enabled', True)
+        self.holidays_country = self.settings.get('calendar', {}).get('holidays_country', 'JP')
+        
+        # 祝日データの初期化
+        self.jp_holidays = None
+        if HOLIDAYS_AVAILABLE and self.holidays_enabled:
+            try:
+                if self.holidays_country == 'JP':
+                    self.jp_holidays = holidays.Japan()
+                    logger.info("Japanese holidays loaded")
+            except Exception as e:
+                logger.warning(f"Failed to load holidays: {e}")
+                self.jp_holidays = None
     
     def render(self, screen: pygame.Surface) -> None:
         """
@@ -114,6 +138,9 @@ class SimpleCalendarRenderer:
                                              (self.cal_x + i * day_width + day_width // 2, day_y),
                                              15)
                             color = (0, 0, 0)  # 黒
+                        # 祝日判定
+                        elif self.jp_holidays and date(now.year, now.month, day) in self.jp_holidays:
+                            color = self.holiday_color
                         elif i == 0:
                             color = self.sunday_color
                         elif i == 6:
@@ -125,6 +152,22 @@ class SimpleCalendarRenderer:
                         day_x = self.cal_x + i * day_width + day_width // 2
                         day_rect = day_text.get_rect(center=(day_x, day_y))
                         screen.blit(day_text, day_rect)
+                        
+                        # 祝日名を小さく表示（オプション）
+                        if self.jp_holidays and date(now.year, now.month, day) in self.jp_holidays:
+                            holiday_name = self.jp_holidays[date(now.year, now.month, day)]
+                            # 短縮表示（最初の2文字）
+                            if len(holiday_name) > 2:
+                                holiday_name = holiday_name[:2]
+                            
+                            # さらに小さいフォントで祝日名を表示
+                            try:
+                                tiny_font = pygame.font.Font(None, 10)
+                                holiday_text = tiny_font.render(holiday_name, True, self.holiday_color)
+                                holiday_rect = holiday_text.get_rect(center=(day_x, day_y + 10))
+                                screen.blit(holiday_text, holiday_rect)
+                            except:
+                                pass  # フォントエラーは無視
                 
                 day_y += 30
             

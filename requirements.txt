@@ -6,6 +6,7 @@ pygame>=2.5.0       # SDL2ベースの描画ライブラリ
 PyYAML>=6.0        # YAML設定ファイル読み込み
 requests>=2.31.0   # HTTP通信（天気API）
 python-dotenv>=1.0.0  # 環境変数管理
+holidays>=0.45     # 祝日データ取得
 
 # Optional dependencies for development
 pytest>=7.4.0      # テストフレームワーク

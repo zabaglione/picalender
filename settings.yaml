@@ -21,12 +21,15 @@ ui:
     sunday: [255, 100, 100]
     saturday: [100, 100, 255]
     weekday: [255, 255, 255]
+    holiday: [255, 80, 80]      # 祝日の文字色（赤系）
     background: [0, 0, 0]
     weather_panel: [40, 40, 40]
     weather_panel_alpha: 200
 
 calendar:
   first_weekday: "SUNDAY"
+  holidays_enabled: true    # 祝日表示のON/OFF
+  holidays_country: "JP"    # 国コード（JP=日本）
 
 background:
   dir: "./wallpapers"
