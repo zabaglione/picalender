@@ -321,7 +321,7 @@ class SimpleCalendarRenderer:
                         # 今日の場合は補助情報を表示しない（黄色い円と重なるため）
                         if day != now.day:
                             # 六曜名を小さく表示（オプション）- 表示順を先に
-                            sub_info_y = day_y + 11  # 日付の下の基本位置（少し余裕を持たせる）
+                            sub_info_y = day_y + 16  # 日付の下の位置をさらに下げる（フォント高さを考慮）
                             
                             if self.rokuyou_enabled and ROKUYOU_AVAILABLE and self.show_rokuyou_names:
                                 try:
@@ -330,7 +330,7 @@ class SimpleCalendarRenderer:
                                     rokuyou_text = self.tiny_font.render(rokuyou_name, True, rokuyou_color)
                                     rokuyou_rect = rokuyou_text.get_rect(center=(day_x, sub_info_y))
                                     screen.blit(rokuyou_text, rokuyou_rect)
-                                    sub_info_y += 9  # 次の情報のために位置を下げる（少し間隔を広げる）
+                                    sub_info_y += 12  # 次の情報のために位置を下げる（間隔をさらに広げる）
                                 except Exception as e:
                                     logger.debug(f"Failed to render rokuyou for {current_date}: {e}")
                             
