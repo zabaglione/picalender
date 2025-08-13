@@ -269,8 +269,11 @@ class PiCalendarApp:
                 moon_renderer = SimpleMoonRenderer(self.settings)
                 self.renderers.append(('moon', moon_renderer))
                 self.logger.info("Moon phase renderer initialized")
+                self.logger.info(f"Current renderers: {[name for name, _ in self.renderers]}")
             except Exception as e:
                 self.logger.error(f"Failed to initialize moon renderer: {e}")
+                import traceback
+                self.logger.error(f"Traceback: {traceback.format_exc()}")
             
             self.logger.info("Initialization complete")
             return True
@@ -342,8 +345,10 @@ class PiCalendarApp:
         
         # 初期描画
         self.screen.blit(background_cache, (0, 0))
+        self.logger.info(f"Initial render - rendering {len(self.renderers)} renderers: {[name for name, _ in self.renderers]}")
         for name, renderer in self.renderers:
             try:
+                self.logger.debug(f"Rendering {name}...")
                 renderer.render(self.screen)
                 last_update_times[name] = time.time()
             except Exception as e:
