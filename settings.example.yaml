@@ -1,12 +1,19 @@
-# PiCalendar 設定ファイル (サンプル)
+# PiCalendar 設定ファイル (サンプル) - v1.1.0対応
 # このファイルを settings.yaml にコピーして使用してください
 # cp settings.example.yaml settings.yaml
+#
+# 📌 主な改善点（v1.1.0）：
+# - 統合版main.py（環境自動検出）
+# - CPU使用率大幅削減（fps: 5推奨）
+# - カレンダーフォントサイズ最適化（cal_font_px: 28）
+# - 文字重複問題修正
+# - 6週カレンダー対応
 
 # 画面設定
 screen:
   width: 1024              # 画面幅（ピクセル）
   height: 600              # 画面高さ（ピクセル）
-  fps: 30                  # フレームレート
+  fps: 5                   # フレームレート（CPU使用率軽減のため低く設定）
   fullscreen: true         # フルスクリーン表示
   hide_cursor: true        # マウスカーソルを隠す
 
@@ -30,8 +37,8 @@ layout:
     y_offset: -30             # Y座標の微調整
   moon_phase:
     position: "top-right"     # 位置
-    x_offset: -50             # X座標の微調整
-    y_offset: 50              # Y座標の微調整
+    x_offset: -100            # X座標の微調整
+    y_offset: 100             # Y座標の微調整
 
 # UI設定
 ui:
@@ -40,9 +47,12 @@ ui:
     y: 16                  # 上下マージン
   clock_font_px: 130       # 時計のフォントサイズ
   date_font_px: 36         # 日付のフォントサイズ
-  cal_font_px: 22          # カレンダーのフォントサイズ（旧名）
-  calendar_font_px: 22     # カレンダーのフォントサイズ
+  cal_font_px: 28          # カレンダーのフォントサイズ（推奨：24-32、可読性重視）
   weather_font_px: 22      # 天気のフォントサイズ
+  # フォントサイズ選択指針：
+  # - 小さめ（22-24）: コンパクト表示、情報密度重視
+  # - 標準（26-28）: 推奨サイズ、バランスの良い可読性  
+  # - 大きめ（30-32）: 大きく見やすい、高齢者向け
   colors:
     text: [255, 255, 255]       # 通常テキスト色
     sunday: [255, 100, 100]     # 日曜日の色
@@ -58,7 +68,7 @@ calendar:
   first_weekday: "SUNDAY"  # 週の始まり (SUNDAY or MONDAY)
   holidays_enabled: true   # 祝日表示のON/OFF
   holidays_country: "JP"   # 国コード（JP=日本）
-  show_holiday_names: false # 祝日名の表示（true=表示, false=色のみ）
+  show_holiday_names: true # 祝日名の表示（true=表示, false=色のみ）
   rokuyou_enabled: true    # 六曜表示のON/OFF
   show_rokuyou_names: true # 六曜名の表示（true=表示, false=色のみ）
   rokuyou_format: "single" # 六曜の表示形式（"full", "short", "single"）
