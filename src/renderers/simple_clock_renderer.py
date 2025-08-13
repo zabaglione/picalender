@@ -28,25 +28,12 @@ class SimpleClockRenderer:
         # フォントサイズ
         self.font_size = ui_settings.get('clock_font_px', 130)
         
-        # フォント初期化（等幅フォントを優先）
+        # フォント初期化（デフォルトフォントを使用）
         try:
-            # 等幅フォントを試す
-            monospace_fonts = ['monospace', 'DejaVuSansMono', 'LiberationMono', 'CourierNew']
-            self.font = None
-            for font_name in monospace_fonts:
-                try:
-                    self.font = pygame.font.SysFont(font_name, self.font_size)
-                    logger.info(f"Using monospace font: {font_name}")
-                    break
-                except:
-                    continue
-            
-            # 等幅フォントが見つからない場合はデフォルト
-            if not self.font:
-                self.font = pygame.font.Font(None, self.font_size)
-                logger.info("Using default font")
+            self.font = pygame.font.Font(None, self.font_size)
+            logger.info("Using default font")
         except:
-            logger.warning(f"Failed to create font with size {self.font_size}, using default")
+            logger.warning(f"Failed to create font with size {self.font_size}, using fallback")
             self.font = pygame.font.Font(None, 72)
         
         # 位置設定
