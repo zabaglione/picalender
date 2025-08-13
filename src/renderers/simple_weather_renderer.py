@@ -283,9 +283,9 @@ class SimpleWeatherRenderer:
         
         # 天気パネルの背景を描画（カレンダーと同じサイズに）
         panel_x = 24  # 左マージン
-        panel_y = screen.get_height() - 280  # カレンダーと同じ高さ
+        panel_y = screen.get_height() - 330  # カレンダーと同じ高さ（280→330）
         panel_width = 350  # カレンダーと同じ幅
-        panel_height = 250  # カレンダーと同じ高さ
+        panel_height = 300  # カレンダーと同じ高さ（250→300）
         
         # 半透明の背景パネル
         panel_surface = pygame.Surface((panel_width, panel_height))

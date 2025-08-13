@@ -89,9 +89,9 @@ class SimpleCalendarRenderer:
         x_offset = layout_settings.get('x_offset', -30)
         y_offset = layout_settings.get('y_offset', -30)
         
-        # カレンダーサイズ
+        # カレンダーサイズ（6週の月に対応するため高さを拡大）
         self.cal_width = 350
-        self.cal_height = 250
+        self.cal_height = 300  # 250→300 (+50px)
         
         # 位置を計算
         self._calculate_position(position, x_offset, y_offset)
