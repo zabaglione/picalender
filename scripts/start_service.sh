@@ -1,14 +1,22 @@
 #!/bin/bash
 # PiCalendarサービス起動スクリプト
 
+# 現在のユーザーのホームディレクトリを動的に取得
+if [ -n "$USER" ]; then
+    USER_HOME=$(eval echo ~$USER)
+else
+    USER_HOME=$HOME
+fi
+
 # 作業ディレクトリに移動
-cd /home/pi/picalender
+cd "$USER_HOME/picalender" || exit 1
 
 # ログディレクトリ作成
 mkdir -p logs
 
 # 起動時刻を記録
 echo "Starting PiCalendar at $(date)" >> logs/service.log
+echo "User: $USER, Home: $USER_HOME" >> logs/service.log
 
 # 仮想環境が存在するか確認
 if [ -d "venv" ]; then

@@ -6,22 +6,22 @@ StartLimitIntervalSec=0
 
 [Service]
 Type=simple
-User=pi
-Group=pi
-WorkingDirectory=/home/pi/picalender
+User=zabaglione
+Group=zabaglione
+WorkingDirectory=/home/zabaglione/picalender
 Environment="SDL_VIDEODRIVER=kmsdrm"
 Environment="SDL_FBDEV=/dev/fb0"
 Environment="SDL_KMSDRM_DEVICE_INDEX=0"
 Environment="SDL_RENDER_DRIVER=software"
 Environment="DISPLAY=:0"
 Environment="PYTHONUNBUFFERED=1"
-Environment="PYTHONPATH=/home/pi/picalender:/home/pi/picalender/src:/home/pi/picalender/src/renderers"
+Environment="PYTHONPATH=/home/zabaglione/picalender:/home/zabaglione/picalender/src:/home/zabaglione/picalender/src/renderers"
 
 # 起動前の待機時間（ネットワークとディスプレイの準備を短縮）
 ExecStartPre=/bin/sleep 3
 
 # メインアプリケーション起動（起動スクリプト経由）
-ExecStart=/home/pi/picalender/scripts/start_service.sh
+ExecStart=/home/zabaglione/picalender/scripts/start_service.sh
 
 # 再起動設定
 Restart=on-failure
