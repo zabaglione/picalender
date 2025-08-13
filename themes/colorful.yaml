@@ -1,0 +1,42 @@
+# カラフルテーマ
+name: "Colorful"
+description: "明るくカラフルな表示設定"
+
+# 画面設定
+screen:
+  width: 1024
+  height: 600
+  fps: 30
+  fullscreen: true
+
+# UI設定（大きめのフォント）
+ui:
+  clock_font_px: 140
+  date_font_px: 40
+  calendar_font_px: 24
+  weather_font_px: 22
+
+# 色設定（鮮やかな配色）
+colors:
+  clock:
+    text: [255, 255, 100]  # 黄色
+    shadow: [50, 0, 100]  # 紫の影
+  date:
+    text: [100, 255, 255]  # シアン
+    shadow: [0, 50, 50]
+  calendar:
+    background: [60, 20, 100, 180]  # 紫の背景
+    text: [255, 255, 255]
+    sunday: [255, 100, 150]  # ピンク
+    saturday: [100, 200, 255]  # スカイブルー
+    today: [255, 255, 0]  # 明るい黄色
+  weather:
+    background: [20, 60, 100, 180]  # 青の背景
+    text: [255, 255, 255]
+    temperature: [255, 200, 50]  # オレンジ
+    precipitation: [100, 255, 255]  # アクア
+
+# 壁紙設定
+wallpaper:
+  rotation_seconds: 180  # 3分ごと（頻繁に切り替え）
+  fit_mode: 'fill'

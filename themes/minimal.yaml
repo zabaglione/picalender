@@ -1,0 +1,42 @@
+# ミニマルテーマ
+name: "Minimal"
+description: "必要最小限の情報のみ表示"
+
+# 画面設定
+screen:
+  width: 1024
+  height: 600
+  fps: 15  # 低フレームレート
+  fullscreen: true
+
+# UI設定（時計と日付を大きく）
+ui:
+  clock_font_px: 160  # 特大
+  date_font_px: 42
+  calendar_font_px: 20
+  weather_font_px: 18
+
+# 色設定（モノクロ）
+colors:
+  clock:
+    text: [255, 255, 255]
+    shadow: [0, 0, 0]
+  date:
+    text: [200, 200, 200]
+    shadow: [0, 0, 0]
+  calendar:
+    background: [0, 0, 0, 150]  # 半透明の黒
+    text: [200, 200, 200]
+    sunday: [255, 255, 255]  # 白
+    saturday: [200, 200, 200]  # グレー
+    today: [255, 255, 255]  # 白
+  weather:
+    background: [0, 0, 0, 150]
+    text: [200, 200, 200]
+    temperature: [255, 255, 255]
+    precipitation: [180, 180, 180]
+
+# 壁紙設定
+wallpaper:
+  rotation_seconds: 0  # 切り替えなし
+  fit_mode: 'fill'

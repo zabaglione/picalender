@@ -1,0 +1,42 @@
+# コンパクトテーマ
+name: "Compact"
+description: "小さい画面向けの省スペース設定"
+
+# 画面設定
+screen:
+  width: 1024
+  height: 600
+  fps: 30
+  fullscreen: true
+
+# UI設定（小さめのフォント）
+ui:
+  clock_font_px: 100
+  date_font_px: 28
+  calendar_font_px: 18
+  weather_font_px: 16
+
+# 色設定
+colors:
+  clock:
+    text: [255, 255, 255]
+    shadow: [10, 10, 20]
+  date:
+    text: [255, 255, 255]
+    shadow: [10, 10, 20]
+  calendar:
+    background: [30, 40, 50, 200]
+    text: [255, 255, 255]
+    sunday: [255, 100, 100]
+    saturday: [100, 100, 255]
+    today: [255, 255, 100]
+  weather:
+    background: [30, 40, 50, 200]
+    text: [255, 255, 255]
+    temperature: [255, 200, 100]
+    precipitation: [150, 200, 255]
+
+# 壁紙設定
+wallpaper:
+  rotation_seconds: 600  # 10分ごと
+  fit_mode: 'fit'  # アスペクト比保持

@@ -1,0 +1,42 @@
+# デフォルトテーマ
+name: "Default"
+description: "標準的な表示設定"
+
+# 画面設定
+screen:
+  width: 1024
+  height: 600
+  fps: 30
+  fullscreen: true
+
+# UI設定
+ui:
+  clock_font_px: 130
+  date_font_px: 36
+  calendar_font_px: 22
+  weather_font_px: 20
+
+# 色設定
+colors:
+  clock:
+    text: [255, 255, 255]
+    shadow: [10, 10, 20]
+  date:
+    text: [255, 255, 255]
+    shadow: [10, 10, 20]
+  calendar:
+    background: [30, 40, 50, 200]
+    text: [255, 255, 255]
+    sunday: [255, 100, 100]
+    saturday: [100, 100, 255]
+    today: [255, 255, 100]
+  weather:
+    background: [30, 40, 50, 200]
+    text: [255, 255, 255]
+    temperature: [255, 200, 100]
+    precipitation: [150, 200, 255]
+
+# 壁紙設定
+wallpaper:
+  rotation_seconds: 300
+  fit_mode: 'fill'

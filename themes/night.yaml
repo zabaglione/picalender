@@ -1,0 +1,42 @@
+# ナイトモードテーマ
+name: "Night Mode"
+description: "夜間や暗い環境向けの設定"
+
+# 画面設定
+screen:
+  width: 1024
+  height: 600
+  fps: 20  # 省電力のため低めに
+  fullscreen: true
+
+# UI設定
+ui:
+  clock_font_px: 130
+  date_font_px: 36
+  calendar_font_px: 22
+  weather_font_px: 20
+
+# 色設定（暗めの配色）
+colors:
+  clock:
+    text: [200, 200, 200]  # 少し暗めの白
+    shadow: [5, 5, 10]
+  date:
+    text: [180, 180, 180]
+    shadow: [5, 5, 10]
+  calendar:
+    background: [20, 20, 30, 220]  # より暗い背景
+    text: [180, 180, 180]
+    sunday: [200, 80, 80]  # 暗めの赤
+    saturday: [80, 80, 200]  # 暗めの青
+    today: [200, 200, 80]  # 暗めの黄色
+  weather:
+    background: [20, 20, 30, 220]
+    text: [180, 180, 180]
+    temperature: [200, 160, 80]
+    precipitation: [100, 150, 200]
+
+# 壁紙設定
+wallpaper:
+  rotation_seconds: 0  # 切り替えなし（真っ黒推奨）
+  fit_mode: 'fill'
