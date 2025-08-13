@@ -220,12 +220,30 @@ class PiCalendarApp:
         self.running = True
         self.logger.info("Starting main loop...")
         
-        fps = self.settings['screen']['fps']
+        fps = self.settings['screen'].get('fps', 10)  # FPSを10に下げる
         frame_count = 0
         last_log = time.time()
         
+        # 更新制御用
+        last_second = -1
+        last_minute = -1
+        last_update_times = {}
+        
+        # 初期描画
+        self.draw_gradient_background(self.screen)
+        for name, renderer in self.renderers:
+            try:
+                renderer.render(self.screen)
+                last_update_times[name] = time.time()
+            except Exception as e:
+                self.logger.error(f"Initial render failed for {name}: {e}")
+        pygame.display.flip()
+        
         try:
             while self.running:
+                current_time = time.time()
+                local_time = time.localtime(current_time)
+                
                 # イベント処理
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
@@ -236,25 +254,72 @@ class PiCalendarApp:
                         elif event.key == pygame.K_q:
                             self.running = False
                 
-                # 背景描画
-                self.draw_gradient_background(self.screen)
+                # 更新が必要なレンダラーを判定
+                need_update = False
                 
-                # レンダラー実行
+                # 秒が変わったら時計を更新
+                if local_time.tm_sec != last_second:
+                    last_second = local_time.tm_sec
+                    for name, renderer in self.renderers:
+                        if name == 'clock':
+                            try:
+                                renderer.render(self.screen)
+                                last_update_times[name] = current_time
+                                need_update = True
+                            except Exception as e:
+                                self.logger.error(f"Clock update failed: {e}")
+                            break
+                
+                # 分が変わったら日付とカレンダーを更新
+                if local_time.tm_min != last_minute:
+                    last_minute = local_time.tm_min
+                    
+                    # 背景を再描画（分単位の更新時のみ）
+                    self.draw_gradient_background(self.screen)
+                    
+                    for name, renderer in self.renderers:
+                        if name in ['date', 'calendar', 'clock']:
+                            try:
+                                renderer.render(self.screen)
+                                last_update_times[name] = current_time
+                                need_update = True
+                            except Exception as e:
+                                self.logger.error(f"{name} update failed: {e}")
+                
+                # その他のレンダラーは設定された間隔で更新
+                update_intervals = {
+                    'weather': 1800,  # 30分
+                    'moon': 3600,     # 1時間
+                    'wallpaper': 300  # 5分
+                }
+                
                 for name, renderer in self.renderers:
-                    try:
-                        renderer.render(self.screen)
-                    except Exception as e:
-                        self.logger.error(f"Renderer {name} failed: {e}")
+                    if name in update_intervals:
+                        interval = update_intervals[name]
+                        last_update = last_update_times.get(name, 0)
+                        if current_time - last_update >= interval:
+                            try:
+                                # 壁紙更新時は全体を再描画
+                                if name == 'wallpaper':
+                                    self.draw_gradient_background(self.screen)
+                                    for n, r in self.renderers:
+                                        r.render(self.screen)
+                                else:
+                                    renderer.render(self.screen)
+                                last_update_times[name] = current_time
+                                need_update = True
+                            except Exception as e:
+                                self.logger.error(f"{name} update failed: {e}")
                 
-                # 画面更新
-                pygame.display.flip()
+                # 画面更新（必要な時のみ）
+                if need_update:
+                    pygame.display.flip()
                 
                 # FPS制御
                 self.clock.tick(fps)
                 frame_count += 1
                 
                 # 定期ログ（30秒ごと）
-                current_time = time.time()
                 if current_time - last_log > 30:
                     actual_fps = frame_count / (current_time - last_log)
                     self.logger.info(f"Running... FPS: {actual_fps:.1f}")
