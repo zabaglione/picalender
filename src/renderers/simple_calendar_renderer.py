@@ -83,11 +83,18 @@ class SimpleCalendarRenderer:
         self.screen_width = screen_settings.get('width', 1024)
         self.screen_height = screen_settings.get('height', 600)
         
-        # カレンダー位置とサイズ
-        self.cal_x = self.screen_width - 380
-        self.cal_y = self.screen_height - 280
+        # レイアウト設定を読み込み
+        layout_settings = self.settings.get('layout', {}).get('calendar', {})
+        position = layout_settings.get('position', 'bottom-right')
+        x_offset = layout_settings.get('x_offset', -30)
+        y_offset = layout_settings.get('y_offset', -30)
+        
+        # カレンダーサイズ
         self.cal_width = 350
         self.cal_height = 250
+        
+        # 位置を計算
+        self._calculate_position(position, x_offset, y_offset)
         
         # 色設定
         colors = ui_settings.get('colors', {})
@@ -137,6 +144,39 @@ class SimpleCalendarRenderer:
                 logger.warning("holidays library is not available")
             if not self.holidays_enabled:
                 logger.info("holidays are disabled in settings")
+    
+    def _calculate_position(self, position: str, x_offset: int, y_offset: int):
+        """位置を計算"""
+        # 基本位置を決定
+        if position == "top-left":
+            base_x = 30
+            base_y = 30
+        elif position == "top-center":
+            base_x = (self.screen_width - self.cal_width) // 2
+            base_y = 30
+        elif position == "top-right":
+            base_x = self.screen_width - self.cal_width - 30
+            base_y = 30
+        elif position == "center":
+            base_x = (self.screen_width - self.cal_width) // 2
+            base_y = (self.screen_height - self.cal_height) // 2
+        elif position == "bottom-left":
+            base_x = 30
+            base_y = self.screen_height - self.cal_height - 30
+        elif position == "bottom-center":
+            base_x = (self.screen_width - self.cal_width) // 2
+            base_y = self.screen_height - self.cal_height - 30
+        elif position == "bottom-right":
+            base_x = self.screen_width - self.cal_width - 30
+            base_y = self.screen_height - self.cal_height - 30
+        else:
+            # デフォルト: 右下
+            base_x = self.screen_width - self.cal_width - 30
+            base_y = self.screen_height - self.cal_height - 30
+        
+        # オフセットを適用
+        self.cal_x = base_x + x_offset
+        self.cal_y = base_y + y_offset
     
     def render(self, screen: pygame.Surface) -> None:
         """

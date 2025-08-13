@@ -10,6 +10,29 @@ screen:
   fullscreen: true         # フルスクリーン表示
   hide_cursor: true        # マウスカーソルを隠す
 
+# レイアウト設定（ウィジェットの配置）
+layout:
+  clock:
+    position: "top-center"    # 位置（top-left, top-center, top-right, center, bottom-left, bottom-center, bottom-right）
+    x_offset: 0               # X座標の微調整（ピクセル）
+    y_offset: 100             # Y座標の微調整（ピクセル）
+  date:
+    position: "top-center"    # 位置
+    x_offset: 0               # X座標の微調整
+    y_offset: 240             # Y座標の微調整
+  calendar:
+    position: "bottom-right"  # 位置
+    x_offset: -30             # X座標の微調整
+    y_offset: -30             # Y座標の微調整
+  weather:
+    position: "bottom-left"   # 位置
+    x_offset: 30              # X座標の微調整
+    y_offset: -30             # Y座標の微調整
+  moon_phase:
+    position: "top-right"     # 位置
+    x_offset: -50             # X座標の微調整
+    y_offset: 50              # Y座標の微調整
+
 # UI設定
 ui:
   margins:
@@ -39,6 +62,8 @@ calendar:
   rokuyou_enabled: true    # 六曜表示のON/OFF
   show_rokuyou_names: true # 六曜名の表示（true=表示, false=色のみ）
   rokuyou_format: "single" # 六曜の表示形式（"full", "short", "single"）
+  moon_phase_enabled: true # 月相表示のON/OFF
+  moon_phase_format: "emoji" # 月相の表示形式（"emoji", "text", "ascii"）
 
 # 背景設定
 background:

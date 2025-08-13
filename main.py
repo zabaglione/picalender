@@ -39,6 +39,7 @@ sys.path.append(str(Path(__file__).parent / 'src' / 'renderers'))
 from simple_clock_renderer import SimpleClockRenderer
 from simple_date_renderer import SimpleDateRenderer
 from simple_calendar_renderer import SimpleCalendarRenderer
+from simple_moon_renderer import SimpleMoonRenderer
 
 
 class PiCalendarApp:
@@ -183,6 +184,14 @@ class PiCalendarApp:
                 self.logger.info("Calendar renderer initialized")
             except Exception as e:
                 self.logger.error(f"Failed to initialize calendar renderer: {e}")
+            
+            # 月相レンダラー
+            try:
+                moon_renderer = SimpleMoonRenderer(self.settings)
+                self.renderers.append(('moon', moon_renderer))
+                self.logger.info("Moon phase renderer initialized")
+            except Exception as e:
+                self.logger.error(f"Failed to initialize moon renderer: {e}")
             
             self.logger.info("Initialization complete")
             return True
