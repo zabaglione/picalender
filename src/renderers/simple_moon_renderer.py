@@ -92,6 +92,10 @@ class SimpleMoonRenderer:
         self.last_update = 0
         self.update_interval = 3600.0  # 1時間ごと
         
+        # 描画キャッシュ
+        self.cached_moon_surface = None
+        self.cached_moon_age = -1
+        
         logger.info(f"Moon phase settings: enabled={self.moon_phase_enabled}, format={self.moon_phase_format}, available={MOON_PHASE_AVAILABLE}")
     
     def _calculate_position(self):
@@ -172,8 +176,17 @@ class SimpleMoonRenderer:
                 screen.blit(age_surface, age_rect)
                 
             elif self.moon_phase_format == "graphic":
-                # グラフィック形式（円を描画）
-                self._draw_moon_graphic(screen, moon_info, self.x, self.y)
+                # グラフィック形式（キャッシュ使用）
+                moon_age = moon_info["age"]
+                
+                # 月齢が変わった場合のみ再描画
+                if self.cached_moon_surface is None or abs(self.cached_moon_age - moon_age) > 0.1:
+                    self.cached_moon_surface = self._create_moon_surface(moon_info)
+                    self.cached_moon_age = moon_age
+                
+                # キャッシュされた月を描画
+                if self.cached_moon_surface:
+                    screen.blit(self.cached_moon_surface, (self.x - 32, self.y - 32))
                 
                 # 月齢を表示（背景付きで見やすく）
                 age_text = f"月齢 {moon_info['age']}"
@@ -223,15 +236,15 @@ class SimpleMoonRenderer:
         except Exception as e:
             logger.error(f"Failed to render moon phase: {e}")
     
-    def _draw_moon_graphic(self, screen: pygame.Surface, moon_info: Dict, x: int, y: int) -> None:
+    def _create_moon_surface(self, moon_info: Dict) -> pygame.Surface:
         """
-        月をグラフィカルに描画
+        月のサーフェースを作成（キャッシュ用）
         
         Args:
-            screen: 描画対象のサーフェース
             moon_info: 月情報
-            x: X座標
-            y: Y座標
+            
+        Returns:
+            月のサーフェース
         """
         import math
         
@@ -333,8 +346,8 @@ class SimpleMoonRenderer:
                              (center_x - radius // 3, center_y - radius // 3), 
                              radius // 5)
         
-        # 完成した月を画面に描画
-        screen.blit(moon_surface, (x - center_x, y - center_y))
+        # 完成した月のサーフェースを返す
+        return moon_surface
     
     def should_update(self) -> bool:
         """

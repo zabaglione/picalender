@@ -220,7 +220,7 @@ class PiCalendarApp:
         self.running = True
         self.logger.info("Starting main loop...")
         
-        fps = self.settings['screen'].get('fps', 10)  # FPSを10に下げる
+        base_fps = self.settings['screen'].get('fps', 5)  # さらにFPSを下げる
         frame_count = 0
         last_log = time.time()
         
@@ -229,8 +229,20 @@ class PiCalendarApp:
         last_minute = -1
         last_update_times = {}
         
+        # 背景キャッシュ
+        background_cache = None
+        cache_invalid = True
+        
+        # 背景をキャッシュ
+        def create_background_cache():
+            bg_surface = pygame.Surface((self.screen.get_width(), self.screen.get_height()))
+            self.draw_gradient_background(bg_surface)
+            return bg_surface
+        
+        background_cache = create_background_cache()
+        
         # 初期描画
-        self.draw_gradient_background(self.screen)
+        self.screen.blit(background_cache, (0, 0))
         for name, renderer in self.renderers:
             try:
                 renderer.render(self.screen)
@@ -261,10 +273,10 @@ class PiCalendarApp:
                 if local_time.tm_sec != last_second:
                     last_second = local_time.tm_sec
                     
-                    # 時計部分の背景をクリア（グラデーション背景で上書き）
-                    self.draw_gradient_background(self.screen)
+                    # 背景をキャッシュから復元（高速）
+                    self.screen.blit(background_cache, (0, 0))
                     
-                    # 全レンダラーを再描画（秒更新時も全体を更新）
+                    # 全レンダラーを再描画
                     for name, renderer in self.renderers:
                         try:
                             renderer.render(self.screen)
@@ -278,8 +290,8 @@ class PiCalendarApp:
                 elif local_time.tm_min != last_minute:
                     last_minute = local_time.tm_min
                     
-                    # 背景を再描画（分単位の更新時のみ）
-                    self.draw_gradient_background(self.screen)
+                    # 背景をキャッシュから復元
+                    self.screen.blit(background_cache, (0, 0))
                     
                     # 全レンダラーを再描画
                     for name, renderer in self.renderers:
@@ -304,13 +316,17 @@ class PiCalendarApp:
                         last_update = last_update_times.get(name, 0)
                         if current_time - last_update >= interval:
                             try:
-                                # 壁紙更新時は全体を再描画
+                                # 壁紙更新時は背景キャッシュを再作成
                                 if name == 'wallpaper':
-                                    self.draw_gradient_background(self.screen)
+                                    background_cache = create_background_cache()
+                                    self.screen.blit(background_cache, (0, 0))
                                     for n, r in self.renderers:
                                         r.render(self.screen)
                                 else:
-                                    renderer.render(self.screen)
+                                    # 背景復元してから描画
+                                    self.screen.blit(background_cache, (0, 0))
+                                    for n, r in self.renderers:
+                                        r.render(self.screen)
                                 last_update_times[name] = current_time
                                 need_update = True
                             except Exception as e:
