@@ -144,20 +144,25 @@ class SimpleCalendarRenderer:
             for week in cal_obj:
                 for i, day in enumerate(week):
                     if day > 0:
+                        # 色の決定（優先順位：今日 > 祝日 > 曜日）
+                        current_date = date(now.year, now.month, day)
+                        
                         # 今日をハイライト
                         if day == now.day:
                             pygame.draw.circle(screen, self.today_bg_color,
                                              (self.cal_x + i * day_width + day_width // 2, day_y),
                                              15)
                             color = (0, 0, 0)  # 黒
-                        # 祝日判定
-                        elif self.jp_holidays and date(now.year, now.month, day) in self.jp_holidays:
+                        # 祝日判定（曜日より優先）
+                        elif self.jp_holidays and current_date in self.jp_holidays:
                             color = self.holiday_color
-                        elif i == 0:
+                            logger.debug(f"Holiday detected: {current_date} ({self.jp_holidays[current_date]}) - color: {color}")
+                        # 曜日判定
+                        elif i == 0:  # 日曜日
                             color = self.sunday_color
-                        elif i == 6:
+                        elif i == 6:  # 土曜日
                             color = self.saturday_color
-                        else:
+                        else:  # 平日
                             color = self.text_color
                         
                         day_text = self.small_font.render(str(day), True, color)
@@ -166,8 +171,8 @@ class SimpleCalendarRenderer:
                         screen.blit(day_text, day_rect)
                         
                         # 祝日名を小さく表示（オプション）
-                        if self.jp_holidays and date(now.year, now.month, day) in self.jp_holidays:
-                            holiday_name = self.jp_holidays[date(now.year, now.month, day)]
+                        if self.jp_holidays and current_date in self.jp_holidays:
+                            holiday_name = self.jp_holidays[current_date]
                             # 短縮表示（最初の2文字）
                             if len(holiday_name) > 2:
                                 holiday_name = holiday_name[:2]
