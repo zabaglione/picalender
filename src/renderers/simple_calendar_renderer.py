@@ -71,10 +71,12 @@ class SimpleCalendarRenderer:
         self.update_interval = 60.0  # 1分ごと
         
         # 祝日設定
-        self.holidays_enabled = self.settings.get('calendar', {}).get('holidays_enabled', True)
-        self.holidays_country = self.settings.get('calendar', {}).get('holidays_country', 'JP')
+        calendar_settings = self.settings.get('calendar', {})
+        self.holidays_enabled = calendar_settings.get('holidays_enabled', True)
+        self.holidays_country = calendar_settings.get('holidays_country', 'JP')
+        self.show_holiday_names = calendar_settings.get('show_holiday_names', False)
         
-        logger.info(f"Holiday settings: enabled={self.holidays_enabled}, country={self.holidays_country}, holidays_available={HOLIDAYS_AVAILABLE}")
+        logger.info(f"Holiday settings: enabled={self.holidays_enabled}, country={self.holidays_country}, show_names={self.show_holiday_names}, holidays_available={HOLIDAYS_AVAILABLE}")
         
         # 祝日データの初期化
         self.jp_holidays = None
@@ -171,7 +173,7 @@ class SimpleCalendarRenderer:
                         screen.blit(day_text, day_rect)
                         
                         # 祝日名を小さく表示（オプション）
-                        if self.jp_holidays and current_date in self.jp_holidays:
+                        if self.show_holiday_names and self.jp_holidays and current_date in self.jp_holidays:
                             holiday_name = self.jp_holidays[current_date]
                             # 短縮表示（最初の2文字）
                             if len(holiday_name) > 2:

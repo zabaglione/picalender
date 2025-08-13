@@ -35,6 +35,7 @@ calendar:
   first_weekday: "SUNDAY"  # 週の始まり (SUNDAY or MONDAY)
   holidays_enabled: true   # 祝日表示のON/OFF
   holidays_country: "JP"   # 国コード（JP=日本）
+  show_holiday_names: false # 祝日名の表示（true=表示, false=色のみ）
 
 # 背景設定
 background:

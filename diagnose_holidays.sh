@@ -82,7 +82,7 @@ if [ -f "settings.yaml" ]; then
     echo "✅ settings.yamlが存在します"
     echo ""
     echo "祝日関連の設定:"
-    grep -A 5 "calendar:" settings.yaml || echo "calendar設定が見つかりません"
+    grep -A 10 "calendar:" settings.yaml || echo "calendar設定が見つかりません"
     echo ""
     echo "色設定:"
     grep -A 10 "colors:" settings.yaml | grep holiday || echo "holiday色設定が見つかりません"
