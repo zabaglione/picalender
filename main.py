@@ -187,8 +187,10 @@ class PiCalendarApp:
             self.logger.info("Initializing PiCalendar...")
             
             # pygame初期化（音声なし）
+            self.logger.info("Initializing pygame...")
             pygame.init()
             pygame.mixer.quit()  # 音声ミキサーを明示的に無効化
+            self.logger.info("Pygame initialization complete")
             
             # ディスプレイ初期化
             self.logger.info("Initializing display...")
@@ -216,6 +218,8 @@ class PiCalendarApp:
                     self.screen = pygame.display.set_mode((width, height))
                 
                 pygame.display.set_caption("PiCalendar")
+            
+            self.logger.info("Display initialization complete")
             
             # レンダラー初期化
             self.logger.info("Initializing renderers...")

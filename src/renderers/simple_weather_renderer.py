@@ -55,12 +55,48 @@ class SimpleWeatherRenderer:
     
     def _init_font(self):
         """フォント初期化"""
-        try:
-            # システムフォントを使用
-            self.font = pygame.font.SysFont('notosanscjkjp', self.font_size)
-        except:
-            # フォールバック
+        from pathlib import Path
+        
+        # フォントパスのリスト
+        font_paths = [
+            './assets/fonts/NotoSansCJK-Regular.otf',
+            '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.otf',
+            '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
+            '/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc',
+            '/usr/share/fonts/opentype/noto/NotoSansCJKjp-Regular.otf',
+        ]
+        
+        # ファイルフォントを試す
+        font_loaded = False
+        for font_path in font_paths:
+            if Path(font_path).exists():
+                try:
+                    self.font = pygame.font.Font(font_path, self.font_size)
+                    self.logger.debug(f"Weather: Using font file: {font_path}")
+                    font_loaded = True
+                    break
+                except Exception as e:
+                    self.logger.debug(f"Weather: Failed to load {font_path}: {e}")
+        
+        # システムフォントを試す
+        if not font_loaded:
+            try:
+                # 複数のシステムフォント名を試す
+                for font_name in ['notosanscjkjp', 'notosansjp', 'noto']:
+                    try:
+                        self.font = pygame.font.SysFont(font_name, self.font_size)
+                        self.logger.debug(f"Weather: Using system font: {font_name}")
+                        font_loaded = True
+                        break
+                    except:
+                        continue
+            except:
+                pass
+        
+        # 最終フォールバック
+        if not font_loaded:
             self.font = pygame.font.Font(None, self.font_size)
+            self.logger.warning("Weather: Using default font (Japanese may not display)")
     
     def _load_icons(self):
         """天気アイコンを読み込み"""

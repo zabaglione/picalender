@@ -51,12 +51,22 @@ class SimpleCalendarRenderer:
         font_path = font_config.get('path', './assets/fonts/NotoSansCJK-Regular.otf')
         font_fallback = font_config.get('fallback', '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.otf')
         
-        # フォントファイルを探す
+        # フォントファイルを探す（より多くの場所をチェック）
         self.font_file = None
         from pathlib import Path
         
+        # チェックするフォントパスのリスト（優先順）
+        font_paths = [
+            font_path,
+            font_fallback,
+            '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
+            '/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc',
+            '/usr/share/fonts/opentype/noto/NotoSansCJKjp-Regular.otf',
+            '/usr/share/fonts/truetype/noto/NotoSansCJKjp-Regular.otf',
+        ]
+        
         # 設定されたパスをチェック
-        for path in [font_path, font_fallback]:
+        for path in font_paths:
             if Path(path).exists():
                 self.font_file = path
                 logger.info(f"Using font file: {path}")
@@ -69,12 +79,20 @@ class SimpleCalendarRenderer:
                 self.small_font = pygame.font.Font(self.font_file, self.small_font_size)
             else:
                 # ファイルが見つからない場合はSysFontを使用
-                logger.warning(f"Font files not found: {font_path}, {font_fallback}")
+                logger.warning(f"No font files found in standard locations")
                 logger.info("Falling back to system font")
-                self.font = pygame.font.SysFont('notosanscjkjp', self.font_size)
-                self.small_font = pygame.font.SysFont('notosanscjkjp', self.small_font_size)
+                # 複数のシステムフォント名を試す
+                for font_name in ['notosanscjkjp', 'notosansjp', 'noto', None]:
+                    try:
+                        self.font = pygame.font.SysFont(font_name, self.font_size)
+                        self.small_font = pygame.font.SysFont(font_name, self.small_font_size)
+                        logger.info(f"Using system font: {font_name}")
+                        break
+                    except:
+                        continue
         except Exception as e:
             logger.warning(f"Failed to create font: {e}")
+            # 最終的なフォールバック
             self.font = pygame.font.Font(None, self.font_size)
             self.small_font = pygame.font.Font(None, self.small_font_size)
         
@@ -89,12 +107,13 @@ class SimpleCalendarRenderer:
         x_offset = layout_settings.get('x_offset', -30)
         y_offset = layout_settings.get('y_offset', -30)
         
-        # カレンダーサイズ（動的計算で対応）
+        # カレンダーサイズ（初期値を設定）
         self.cal_width = 350
-        self.cal_height = self._calculate_calendar_height()  # 動的に計算
+        self.cal_height = 300  # デフォルト値を設定（後で動的計算で上書き）
         
-        # 位置を計算
-        self._calculate_position(position, x_offset, y_offset)
+        # 位置の初期値を設定（後で計算で上書き）
+        self.cal_x = 0
+        self.cal_y = 0
         
         # 色設定
         colors = ui_settings.get('colors', {})
@@ -144,6 +163,15 @@ class SimpleCalendarRenderer:
                 logger.warning("holidays library is not available")
             if not self.holidays_enabled:
                 logger.info("holidays are disabled in settings")
+        
+        # 属性が初期化された後に高さと位置を計算
+        try:
+            self.cal_height = self._calculate_calendar_height()  # 動的に計算
+        except Exception as e:
+            logger.warning(f"Failed to calculate dynamic height: {e}, using default")
+            self.cal_height = 300
+        
+        self._calculate_position(position, x_offset, y_offset)
     
     def _calculate_calendar_height(self):
         """現在の月に必要なカレンダー高さを動的計算"""
@@ -162,9 +190,9 @@ class SimpleCalendarRenderer:
         
         # 六曜や祝日名が表示される場合の追加高さ
         extra_height_per_row = 0
-        if self.rokuyou_enabled and self.show_rokuyou_names:
+        if hasattr(self, 'rokuyou_enabled') and self.rokuyou_enabled and hasattr(self, 'show_rokuyou_names') and self.show_rokuyou_names:
             extra_height_per_row += 15  # 六曜分
-        if self.jp_holidays and self.show_holiday_names:
+        if hasattr(self, 'jp_holidays') and self.jp_holidays and hasattr(self, 'show_holiday_names') and self.show_holiday_names:
             extra_height_per_row += 15  # 祝日名分
         
         calculated_height = base_height + (num_weeks * (row_height + extra_height_per_row)) + bottom_margin
@@ -217,6 +245,11 @@ class SimpleCalendarRenderer:
         Args:
             screen: 描画対象のサーフェース
         """
+        # フォントが初期化されていない場合はスキップ
+        if not hasattr(self, 'font') or self.font is None:
+            logger.error("Calendar renderer: Font not initialized, skipping render")
+            return
+        
         try:
             now = datetime.now()
             

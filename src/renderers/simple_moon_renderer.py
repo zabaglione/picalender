@@ -59,31 +59,51 @@ class SimpleMoonRenderer:
         font_path = font_config.get('path', './assets/fonts/NotoSansCJK-Regular.otf')
         font_fallback = font_config.get('fallback', '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.otf')
         
-        # フォントファイルを探す
+        # フォントファイルを探す（より多くの場所をチェック）
         self.font_file = None
         from pathlib import Path
         
-        for path in [font_path, font_fallback]:
+        font_paths = [
+            font_path,
+            font_fallback,
+            '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
+            '/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc',
+            '/usr/share/fonts/opentype/noto/NotoSansCJKjp-Regular.otf',
+            '/usr/share/fonts/truetype/noto/NotoSansCJKjp-Regular.otf',
+        ]
+        
+        for path in font_paths:
             if Path(path).exists():
                 self.font_file = path
                 break
         
         # フォントを初期化
-        try:
-            if self.font_file:
+        font_loaded = False
+        if self.font_file:
+            try:
                 self.font = pygame.font.Font(self.font_file, self.font_size)
                 self.small_font = pygame.font.Font(self.font_file, self.small_font_size)
                 logger.info(f"Moon renderer: Using font file {self.font_file}")
-            else:
-                # ファイルが見つからない場合はSysFontを使用
-                self.font = pygame.font.SysFont('notosanscjkjp', self.font_size)
-                self.small_font = pygame.font.SysFont('notosanscjkjp', self.small_font_size)
-                logger.warning(f"Moon renderer: Using system font (no file found)")
-        except Exception as e:
-            logger.warning(f"Failed to create font: {e}")
+                font_loaded = True
+            except Exception as e:
+                logger.warning(f"Moon renderer: Failed to load {self.font_file}: {e}")
+        
+        if not font_loaded:
+            # システムフォントを試す
+            for font_name in ['notosanscjkjp', 'notosansjp', 'noto', None]:
+                try:
+                    self.font = pygame.font.SysFont(font_name, self.font_size)
+                    self.small_font = pygame.font.SysFont(font_name, self.small_font_size)
+                    logger.info(f"Moon renderer: Using system font {font_name}")
+                    font_loaded = True
+                    break
+                except:
+                    continue
+        
+        if not font_loaded:
+            logger.warning("Moon renderer: Using default font (Japanese may not display)")
             self.font = pygame.font.Font(None, self.font_size)
             self.small_font = pygame.font.Font(None, self.small_font_size)
-            logger.error(f"Moon renderer: Using default font (Japanese may not display)")
         
         # 位置を計算
         self._calculate_position()
