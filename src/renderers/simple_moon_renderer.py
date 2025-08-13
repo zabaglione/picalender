@@ -246,107 +246,87 @@ class SimpleMoonRenderer:
         # 月齢を0-1の範囲に正規化
         phase = moon_age / 29.53
         
-        if phase < 0.03 or phase > 0.97:  # 新月（月齢0-1, 28.5-29.53）
-            # 全体を暗く
-            pygame.draw.circle(moon_surface, shadow_color, (center_x, center_y), radius)
-            pygame.draw.circle(moon_surface, (60, 60, 60), (center_x, center_y), radius, 1)
-            
-        elif phase < 0.5:  # 新月から満月へ（月齢1-14.75）
-            # 右側が明るく、左側が暗い
-            
-            # まず明るい円を描画
-            pygame.draw.circle(moon_surface, moon_color, (center_x, center_y), radius)
-            
-            # 左側に影を作る
-            shadow_progress = 1 - (phase * 2)  # 1から0へ（満月に近づくにつれて影が小さくなる）
-            
-            if shadow_progress > 0.01:
-                # 影のオフセットを計算（月齢によって変化）
-                shadow_offset = int(radius * shadow_progress)
-                
-                # 左側の影用の円を描画
-                shadow_surface = pygame.Surface((surface_size, surface_size), pygame.SRCALPHA)
-                
-                # 左側の領域をクリップ
-                clip_rect = pygame.Rect(0, 0, center_x, surface_size)
-                shadow_surface.set_clip(clip_rect)
-                
-                # 影の円を描画（左にオフセット）
-                shadow_x = center_x - shadow_offset
-                pygame.draw.circle(shadow_surface, shadow_color, (shadow_x, center_y), radius)
-                
-                # クリッピングを解除
-                shadow_surface.set_clip(None)
-                
-                # 影を月の上に重ねる
-                moon_surface.blit(shadow_surface, (0, 0))
-                
-        elif phase < 0.53:  # 満月（月齢14.75-15.5）
-            # 全体を明るく
-            pygame.draw.circle(moon_surface, moon_color, (center_x, center_y), radius)
-            # ハイライトを追加
-            pygame.draw.circle(moon_surface, (255, 255, 220), 
-                             (center_x - radius // 3, center_y - radius // 3), 
-                             radius // 4)
-                             
-        else:  # 満月から新月へ（月齢15.5-29.53）
-            # 左側が暗く、右側が明るい
-            waning_phase = (phase - 0.5) * 2  # 0から1へ
-            
-            if waning_phase < 0.5:  # 満月直後～下弦（月齢15.5-22）
-                # 基本は明るい円
-                pygame.draw.circle(moon_surface, moon_color, (center_x, center_y), radius)
-                
-                # 左側に影を増やしていく
-                shadow_progress = waning_phase * 2  # 0から1へ
-                shadow_offset = int(radius * shadow_progress)
-                
-                if shadow_offset > 0:
-                    # 影用のサーフェース
-                    shadow_surface = pygame.Surface((surface_size, surface_size), pygame.SRCALPHA)
+        # ピクセル単位で月を描画
+        for py in range(-radius, radius + 1):
+            for px in range(-radius, radius + 1):
+                # 円の内側かチェック
+                distance_sq = px * px + py * py
+                if distance_sq <= radius * radius:
+                    # 画面座標
+                    screen_x = center_x + px
+                    screen_y = center_y + py
                     
-                    # 左側の領域をクリップ
-                    clip_rect = pygame.Rect(0, 0, center_x, surface_size)
-                    shadow_surface.set_clip(clip_rect)
+                    # 月の位相に基づいて明暗を決定
+                    # x座標を-1から1に正規化
+                    norm_x = px / radius
                     
-                    # 影の円を描画（左にオフセット）
-                    shadow_x = center_x - shadow_offset
-                    pygame.draw.circle(shadow_surface, shadow_color, (shadow_x, center_y), radius)
+                    # 各ピクセルが明るいか暗いかを決定
+                    is_bright = False
                     
-                    # クリッピングを解除
-                    shadow_surface.set_clip(None)
+                    if phase < 0.03 or phase > 0.97:  # 新月
+                        is_bright = False
+                    elif phase < 0.5:  # 新月から満月へ
+                        # 右側が徐々に明るくなる
+                        illumination = phase * 2  # 0から1へ
+                        
+                        if illumination < 0.5:
+                            # 三日月形状（右側だけ明るい）
+                            # 楕円の境界を計算
+                            terminator_x = 1 - illumination * 2  # 1から0へ
+                            # y座標での楕円の幅
+                            y_factor = math.sqrt(1 - (py / radius) ** 2) if abs(py) <= radius else 0
+                            boundary = -1 + (1 - terminator_x) * (1 + y_factor)
+                            is_bright = norm_x > boundary
+                        else:
+                            # 上弦から満月へ（左側の影が減る）
+                            shadow_amount = 1 - illumination  # 0.5から0へ
+                            # y座標での楕円の幅
+                            y_factor = math.sqrt(1 - (py / radius) ** 2) if abs(py) <= radius else 0
+                            boundary = -1 + shadow_amount * 2 * y_factor
+                            is_bright = norm_x > boundary
                     
-                    # 影を月の上に重ねる
-                    moon_surface.blit(shadow_surface, (0, 0))
+                    elif phase < 0.53:  # 満月
+                        is_bright = True
                     
-            else:  # 下弦から新月へ（月齢22-29.53）
-                # 全体を暗くする
-                pygame.draw.circle(moon_surface, shadow_color, (center_x, center_y), radius)
-                
-                # 右側に明るい部分を作る
-                light_progress = 2 - waning_phase * 2  # 1から0へ
-                light_offset = int(radius * light_progress)
-                
-                if light_offset > 0:
-                    # 明るい部分用のサーフェース
-                    light_surface = pygame.Surface((surface_size, surface_size), pygame.SRCALPHA)
+                    else:  # 満月から新月へ
+                        waning = (phase - 0.5) * 2  # 0から1へ
+                        
+                        if waning < 0.5:
+                            # 満月直後から下弦（左側に影が増える）
+                            shadow_amount = waning * 2  # 0から1へ
+                            # y座標での楕円の幅
+                            y_factor = math.sqrt(1 - (py / radius) ** 2) if abs(py) <= radius else 0
+                            boundary = -1 + shadow_amount * 2 * y_factor
+                            is_bright = norm_x > boundary
+                        else:
+                            # 下弦から新月（右側だけ明るい三日月）
+                            illumination = 2 - waning * 2  # 1から0へ
+                            # y座標での楕円の幅
+                            y_factor = math.sqrt(1 - (py / radius) ** 2) if abs(py) <= radius else 0
+                            boundary = 1 - illumination * (1 + y_factor)
+                            is_bright = norm_x > boundary
                     
-                    # 右側の領域をクリップ
-                    clip_rect = pygame.Rect(center_x, 0, center_x, surface_size)
-                    light_surface.set_clip(clip_rect)
-                    
-                    # 明るい円を描画（右にオフセット）
-                    light_x = center_x + light_offset
-                    pygame.draw.circle(light_surface, moon_color, (light_x, center_y), radius)
-                    
-                    # クリッピングを解除
-                    light_surface.set_clip(None)
-                    
-                    # 明るい部分を月の上に重ねる
-                    moon_surface.blit(light_surface, (0, 0))
+                    # ピクセルの色を設定
+                    if is_bright:
+                        # 縁に近いほど少し暗くする（リアリズム向上）
+                        edge_factor = 1.0 - (distance_sq / (radius * radius)) * 0.2
+                        color = (
+                            int(moon_color[0] * edge_factor),
+                            int(moon_color[1] * edge_factor),
+                            int(moon_color[2] * edge_factor)
+                        )
+                        moon_surface.set_at((screen_x, screen_y), color + (255,))
+                    else:
+                        moon_surface.set_at((screen_x, screen_y), shadow_color + (255,))
         
         # 輪郭線を描画
         pygame.draw.circle(moon_surface, (200, 200, 180), (center_x, center_y), radius, 1)
+        
+        # 満月の場合はハイライトを追加
+        if 0.47 < phase < 0.53:
+            pygame.draw.circle(moon_surface, (255, 255, 220), 
+                             (center_x - radius // 3, center_y - radius // 3), 
+                             radius // 5)
         
         # 完成した月を画面に描画
         screen.blit(moon_surface, (x - center_x, y - center_y))
