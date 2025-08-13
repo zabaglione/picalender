@@ -18,9 +18,11 @@ echo ""
 
 # 1. 現在の状態を確認
 echo -e "${YELLOW}[1/5] 現在の状態を確認...${NC}"
-PICALENDER_PID=$(pgrep -f "python.*main_x11")
+PICALENDER_PID=$(pgrep -f "python.*main" | head -1)
 if [ ! -z "$PICALENDER_PID" ]; then
     echo -e "${GREEN}✓ PiCalendarが実行中 (PID: $PICALENDER_PID)${NC}"
+    # 実行中のプロセスの詳細を表示
+    ps aux | grep -E "python.*main" | grep -v grep
 else
     echo -e "${YELLOW}! PiCalendarは実行されていません${NC}"
 fi
@@ -28,14 +30,25 @@ fi
 # 2. 既存プロセスを停止
 if [ ! -z "$PICALENDER_PID" ]; then
     echo -e "${YELLOW}[2/5] PiCalendarを停止...${NC}"
-    pkill -f "python.*main_x11"
-    sleep 2
+    
+    # まず通常の終了シグナルを送信
+    pkill -f "python.*main"
+    echo "通常終了シグナルを送信しました。5秒待機..."
+    sleep 5
     
     # 停止確認
-    if pgrep -f "python.*main_x11" > /dev/null; then
-        echo -e "${RED}✗ 停止に失敗しました。強制終了します...${NC}"
-        pkill -9 -f "python.*main_x11"
-        sleep 1
+    if pgrep -f "python.*main" > /dev/null; then
+        echo -e "${YELLOW}まだ実行中です。強制終了します...${NC}"
+        pkill -9 -f "python.*main"
+        sleep 2
+        
+        # 最終確認
+        if pgrep -f "python.*main" > /dev/null; then
+            echo -e "${RED}✗ 強制終了に失敗しました${NC}"
+            echo "手動で以下のコマンドを実行してください："
+            echo "  sudo pkill -9 -f 'python.*main'"
+            exit 1
+        fi
     fi
     echo -e "${GREEN}✓ PiCalendarを停止しました${NC}"
 else
@@ -77,13 +90,14 @@ echo -e "${YELLOW}[5/5] PiCalendarを起動...${NC}"
 
 # 仮想環境のアクティベート（存在する場合）
 # 既にcd ~/picalenderしているので、カレントディレクトリをまずチェック
+CURRENT_USER=${USER:-$(whoami)}
 if [ -d "venv" ]; then
     echo -e "${YELLOW}仮想環境をアクティベート...${NC}"
     source venv/bin/activate
     echo -e "${GREEN}✓ 仮想環境をアクティベートしました${NC}"
     PYTHON_CMD="python3"
     # アクティベート確認
-    which python3
+    echo "Python path: $(which python3)"
 elif [ -d "/home/$CURRENT_USER/picalender/venv" ]; then
     echo -e "${YELLOW}仮想環境をアクティベート（フルパス）...${NC}"
     source "/home/$CURRENT_USER/picalender/venv/bin/activate"
