@@ -13,7 +13,8 @@ PiCalendarは、Raspberry Pi Zero 2 W向けに設計された常時表示型の�
 ### 主な機能
 
 - 🕐 **デジタル時計** - 大きく見やすいデジタル時計表示（影付き、固定位置描画でズレなし）
-- 📅 **カレンダー** - 当月のカレンダーを日曜始まりで表示（曜日色分け、日本の祝日対応）
+- 📅 **カレンダー** - 当月のカレンダーを日曜始まりで表示（曜日色分け、日本の祝日対応、六曜表示）
+- 🌙 **月齢表示** - 現在の月齢と月相名を表示（グラフィカル表示対応）
 - 🌤️ **天気予報** - 3日分の天気予報を画像アイコンで表示（Open-Meteo対応、オフラインキャッシュ機能）
 - 🎨 **テーマシステム** - 5種類のプリセットテーマ（default/compact/night/colorful/minimal）
 - 🖼️ **背景画像** - 壁紙の自動ローテーション表示（5分間隔で切替可能）
@@ -169,6 +170,14 @@ ui:
   calendar_font_px: 22
   weather_font_px: 22
 
+# カレンダー設定
+calendar:
+  show_holiday_names: true  # 祝日名の表示
+  show_rokuyou_names: true  # 六曜の表示
+  rokuyou_format: single    # 六曜表示形式 (full/short/single)
+  moon_phase_enabled: true  # 月齢表示
+  moon_phase_format: graphic # 月齢表示形式 (emoji/text/ascii/graphic)
+
 # 天気設定
 weather:
   provider: openmeteo
@@ -246,6 +255,20 @@ cp your_image.jpg wallpapers/
 2. `settings.yaml`の`fonts.main`パスを更新
 
 ## トラブルシューティング
+
+### サービスが起動しない
+
+```bash
+# ユーザー名エラー (217/USER) の場合
+# サービスファイルを再インストール
+sudo ./scripts/install_service.sh
+
+# ログディレクトリの確認
+ls -la ~/picalender/logs/
+
+# サービスログの確認
+journalctl -u picalender --since "1 hour ago"
+```
 
 ### 画面が表示されない
 
