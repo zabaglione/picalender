@@ -62,24 +62,35 @@ echo -e "${GREEN}✓ pipをアップグレードしました${NC}"
 # 必要なパッケージをインストール
 echo -e "${YELLOW}4. 必要なパッケージをインストール...${NC}"
 
-# 必須パッケージ
-echo "  Installing pygame..."
-pip3 install pygame
-
-echo "  Installing requests..."
-pip3 install requests
-
-# オプションパッケージ
-echo "  Installing PyYAML (optional)..."
-pip3 install pyyaml || echo -e "${YELLOW}! PyYAMLのインストールに失敗しました（動作には影響しません）${NC}"
-
-echo "  Installing Pillow (optional)..."
-pip3 install Pillow || echo -e "${YELLOW}! Pillowのインストールに失敗しました（壁紙生成に必要）${NC}"
+# requirements.txtが存在する場合はそれを使用
+if [ -f "requirements.txt" ]; then
+    echo "  Installing packages from requirements.txt..."
+    pip3 install -r requirements.txt
+else
+    echo -e "${YELLOW}! requirements.txtが見つかりません。個別にインストールします${NC}"
+    
+    # 必須パッケージ
+    echo "  Installing pygame..."
+    pip3 install pygame
+    
+    echo "  Installing requests..."
+    pip3 install requests
+    
+    # オプションパッケージ
+    echo "  Installing PyYAML..."
+    pip3 install pyyaml || echo -e "${YELLOW}! PyYAMLのインストールに失敗しました${NC}"
+    
+    echo "  Installing Pillow..."
+    pip3 install Pillow || echo -e "${YELLOW}! Pillowのインストールに失敗しました${NC}"
+    
+    echo "  Installing holidays..."
+    pip3 install holidays || echo -e "${YELLOW}! holidaysのインストールに失敗しました${NC}"
+fi
 
 # インストール状況を確認
 echo ""
 echo -e "${YELLOW}5. インストール済みパッケージ:${NC}"
-pip3 list | grep -E "pygame|requests|PyYAML|Pillow"
+pip3 list | grep -E "pygame|requests|PyYAML|Pillow|holidays"
 
 echo ""
 echo -e "${BLUE}=========================================${NC}"
