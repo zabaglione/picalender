@@ -220,7 +220,7 @@ class SimpleCalendarRenderer:
             # calendarモジュールを日曜日始まりに設定
             calendar.setfirstweekday(calendar.SUNDAY)
             cal_obj = calendar.monthcalendar(now.year, now.month)
-            day_y = self.cal_y + 80
+            day_y = self.cal_y + 85  # カレンダー開始位置を少し下に
             
             for week in cal_obj:
                 for i, day in enumerate(week):
@@ -296,7 +296,7 @@ class SimpleCalendarRenderer:
                                 logger.debug(f"Failed to render rokuyou for {current_date}: {e}")
                                 pass  # 六曜表示エラーは無視
                 
-                day_y += 38  # 行間を広げる（30→38）
+                day_y += 42  # 行間をさらに広げる（38→42）
             
         except Exception as e:
             logger.error(f"Failed to render calendar: {e}")
