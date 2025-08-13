@@ -32,8 +32,8 @@ class SimpleCalendarRenderer:
         self.settings = settings or {}
         ui_settings = self.settings.get('ui', {})
         
-        # フォントサイズ
-        self.font_size = ui_settings.get('calendar_font_px', 22)
+        # フォントサイズ（旧名と新名の両方をサポート）
+        self.font_size = ui_settings.get('cal_font_px', ui_settings.get('calendar_font_px', 22))
         self.small_font_size = max(self.font_size - 6, 12)
         
         # フォント初期化
@@ -74,16 +74,28 @@ class SimpleCalendarRenderer:
         self.holidays_enabled = self.settings.get('calendar', {}).get('holidays_enabled', True)
         self.holidays_country = self.settings.get('calendar', {}).get('holidays_country', 'JP')
         
+        logger.info(f"Holiday settings: enabled={self.holidays_enabled}, country={self.holidays_country}, holidays_available={HOLIDAYS_AVAILABLE}")
+        
         # 祝日データの初期化
         self.jp_holidays = None
         if HOLIDAYS_AVAILABLE and self.holidays_enabled:
             try:
                 if self.holidays_country == 'JP':
-                    self.jp_holidays = holidays.Japan()
-                    logger.info("Japanese holidays loaded")
+                    # 現在年と来年の祝日データを読み込み
+                    from datetime import datetime
+                    current_year = datetime.now().year
+                    self.jp_holidays = holidays.Japan(years=[current_year, current_year + 1])
+                    logger.info(f"Japanese holidays loaded successfully for {current_year}-{current_year + 1}")
+                else:
+                    logger.warning(f"Country {self.holidays_country} is not supported yet")
             except Exception as e:
                 logger.warning(f"Failed to load holidays: {e}")
                 self.jp_holidays = None
+        else:
+            if not HOLIDAYS_AVAILABLE:
+                logger.warning("holidays library is not available")
+            if not self.holidays_enabled:
+                logger.info("holidays are disabled in settings")
     
     def render(self, screen: pygame.Surface) -> None:
         """
