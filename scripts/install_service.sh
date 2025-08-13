@@ -19,14 +19,38 @@ fi
 
 echo -e "${GREEN}=== PiCalendar systemdサービスのインストール ===${NC}"
 
+# 現在のユーザーを取得（sudoで実行された場合も考慮）
+if [ -n "$SUDO_USER" ]; then
+    # sudoで実行された場合、元のユーザーを使用
+    ACTUAL_USER="$SUDO_USER"
+    USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+else
+    # 直接rootで実行された場合（非推奨）
+    echo -e "${YELLOW}警告: sudoではなくrootで実行されています${NC}"
+    echo "ユーザー名を入力してください（例: zabaglione）:"
+    read -r ACTUAL_USER
+    if [ -z "$ACTUAL_USER" ]; then
+        echo -e "${RED}Error: ユーザー名が入力されませんでした${NC}"
+        exit 1
+    fi
+    USER_HOME=$(getent passwd "$ACTUAL_USER" | cut -d: -f6)
+    if [ -z "$USER_HOME" ]; then
+        echo -e "${RED}Error: ユーザー '$ACTUAL_USER' が存在しません${NC}"
+        exit 1
+    fi
+fi
+
+echo -e "${GREEN}ユーザー: $ACTUAL_USER${NC}"
+echo -e "${GREEN}ホームディレクトリ: $USER_HOME${NC}"
+
 # 変数設定
 SERVICE_NAME="picalender"
 SERVICE_FILE="${SERVICE_NAME}.service"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-SOURCE_SERVICE="${SCRIPT_DIR}/${SERVICE_FILE}"
+SOURCE_SERVICE_TEMPLATE="${SCRIPT_DIR}/${SERVICE_FILE}"
 TARGET_SERVICE="/etc/systemd/system/${SERVICE_FILE}"
-APP_DIR="/home/pi/picalender"
-APP_USER="pi"
+APP_DIR="${USER_HOME}/picalender"
+APP_USER="$ACTUAL_USER"
 
 # ディレクトリ存在チェック
 if [ ! -d "$APP_DIR" ]; then
@@ -47,9 +71,13 @@ if systemctl is-active --quiet $SERVICE_NAME; then
     systemctl stop $SERVICE_NAME
 fi
 
-# サービスファイルのコピー
-echo "サービスファイルをインストール中..."
-cp "$SOURCE_SERVICE" "$TARGET_SERVICE"
+# サービスファイルをユーザー向けにカスタマイズしてコピー
+echo "サービスファイルをカスタマイズ中..."
+# テンプレートからユーザー固有のサービスファイルを生成
+sed -e "s|User=pi|User=$ACTUAL_USER|g" \
+    -e "s|Group=pi|Group=$ACTUAL_USER|g" \
+    -e "s|/home/pi/picalender|$APP_DIR|g" \
+    "$SOURCE_SERVICE_TEMPLATE" > "$TARGET_SERVICE"
 
 # 権限設定
 chmod 644 "$TARGET_SERVICE"
@@ -76,7 +104,12 @@ chown -R $APP_USER:$APP_USER "$APP_DIR"
 
 echo -e "${GREEN}=== インストール完了 ===${NC}"
 echo
-echo "使用可能なコマンド:"
+echo "📁 インストール情報:"
+echo "  ユーザー: $ACTUAL_USER"
+echo "  アプリケーションパス: $APP_DIR"
+echo "  サービスファイル: $TARGET_SERVICE"
+echo
+echo "🚀 使用可能なコマンド:"
 echo "  サービス開始: sudo systemctl start $SERVICE_NAME"
 echo "  サービス停止: sudo systemctl stop $SERVICE_NAME"
 echo "  サービス再起動: sudo systemctl restart $SERVICE_NAME"
@@ -84,4 +117,4 @@ echo "  ステータス確認: sudo systemctl status $SERVICE_NAME"
 echo "  ログ確認: sudo journalctl -u $SERVICE_NAME -f"
 echo "  サービス無効化: sudo systemctl disable $SERVICE_NAME"
 echo
-echo -e "${YELLOW}注意: アプリケーションを起動する前に、settings.yamlを適切に設定してください${NC}"
+echo -e "${YELLOW}⚠️  注意: アプリケーションを起動する前に、$APP_DIR/settings.yamlを適切に設定してください${NC}"
