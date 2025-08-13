@@ -89,9 +89,9 @@ class SimpleCalendarRenderer:
         x_offset = layout_settings.get('x_offset', -30)
         y_offset = layout_settings.get('y_offset', -30)
         
-        # カレンダーサイズ（6週の月に対応するため高さを拡大）
+        # カレンダーサイズ（動的計算で対応）
         self.cal_width = 350
-        self.cal_height = 300  # 250→300 (+50px)
+        self.cal_height = self._calculate_calendar_height()  # 動的に計算
         
         # 位置を計算
         self._calculate_position(position, x_offset, y_offset)
@@ -144,6 +144,38 @@ class SimpleCalendarRenderer:
                 logger.warning("holidays library is not available")
             if not self.holidays_enabled:
                 logger.info("holidays are disabled in settings")
+    
+    def _calculate_calendar_height(self):
+        """現在の月に必要なカレンダー高さを動的計算"""
+        import calendar as cal
+        from datetime import datetime
+        
+        now = datetime.now()
+        cal.setfirstweekday(cal.SUNDAY)
+        cal_obj = cal.monthcalendar(now.year, now.month)
+        num_weeks = len(cal_obj)
+        
+        # 基本サイズ計算
+        base_height = 120  # ヘッダー部分（月名+曜日）
+        row_height = 42    # 各行の高さ（設定と同期）
+        bottom_margin = 20  # 下部余白
+        
+        # 六曜や祝日名が表示される場合の追加高さ
+        extra_height_per_row = 0
+        if self.rokuyou_enabled and self.show_rokuyou_names:
+            extra_height_per_row += 15  # 六曜分
+        if self.jp_holidays and self.show_holiday_names:
+            extra_height_per_row += 15  # 祝日名分
+        
+        calculated_height = base_height + (num_weeks * (row_height + extra_height_per_row)) + bottom_margin
+        
+        # 最小・最大制限
+        min_height = 280
+        max_height = 400
+        final_height = max(min_height, min(max_height, calculated_height))
+        
+        logger.info(f"Calendar dynamic sizing: {num_weeks} weeks, calculated={calculated_height}px, final={final_height}px")
+        return final_height
     
     def _calculate_position(self, position: str, x_offset: int, y_offset: int):
         """位置を計算"""
