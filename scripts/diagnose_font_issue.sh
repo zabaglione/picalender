@@ -1,7 +1,20 @@
 #\!/bin/bash
 # フォント問題診断スクリプト
 
-echo "=== フォント問題診断 ==="
+# 仮想環境の有効化
+if [ -d "venv" ]; then
+    echo "仮想環境を有効化しています..."
+    source venv/bin/activate
+fi
+
+echo "=== システム診断 ==="
+echo ""
+
+# 0. 必要なPythonモジュールの確認
+echo "0. Pythonモジュールの確認:"
+python3 -c "import pygame; print('   ✓ pygame がインストールされています')" 2>/dev/null || echo "   ✗ pygame がインストールされていません"
+python3 -c "import yaml; print('   ✓ PyYAML がインストールされています')" 2>/dev/null || echo "   ✗ PyYAML がインストールされていません - pip3 install pyyaml を実行してください"
+python3 -c "import requests; print('   ✓ requests がインストールされています')" 2>/dev/null || echo "   ✗ requests がインストールされていません"
 echo ""
 
 # 1. 日本語フォントの確認
@@ -76,28 +89,36 @@ cd $(dirname $0)/..
 python3 -c "
 import sys
 import pygame
-import yaml
 from pathlib import Path
 
 pygame.init()
 
-# 設定読み込み
-with open('settings.yaml', 'r') as f:
-    settings = yaml.safe_load(f)
-
-# レンダラーパス追加
-sys.path.append(str(Path('.') / 'src' / 'renderers'))
-
+# YAMLモジュールチェック
 try:
-    from simple_calendar_renderer import SimpleCalendarRenderer
-    renderer = SimpleCalendarRenderer(settings)
-    print('   ✓ カレンダーレンダラーが正常に初期化されました')
-    print(f'   位置: x={renderer.cal_x}, y={renderer.cal_y}')
-    print(f'   サイズ: {renderer.cal_width}x{renderer.cal_height}')
-except Exception as e:
-    print(f'   ✗ カレンダーレンダラーの初期化に失敗: {e}')
-    import traceback
-    traceback.print_exc()
+    import yaml
+    yaml_available = True
+except ImportError:
+    yaml_available = False
+    print('   ✗ PyYAMLが必要です。./scripts/fix_pyyaml.sh を実行してください')
+
+if yaml_available:
+    # 設定読み込み
+    with open('settings.yaml', 'r') as f:
+        settings = yaml.safe_load(f)
+
+    # レンダラーパス追加
+    sys.path.append(str(Path('.') / 'src' / 'renderers'))
+
+    try:
+        from simple_calendar_renderer import SimpleCalendarRenderer
+        renderer = SimpleCalendarRenderer(settings)
+        print('   ✓ カレンダーレンダラーが正常に初期化されました')
+        print(f'   位置: x={renderer.cal_x}, y={renderer.cal_y}')
+        print(f'   サイズ: {renderer.cal_width}x{renderer.cal_height}')
+    except Exception as e:
+        print(f'   ✗ カレンダーレンダラーの初期化に失敗: {e}')
+        import traceback
+        traceback.print_exc()
 "
 
 echo ""
