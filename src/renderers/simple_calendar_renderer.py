@@ -16,6 +16,16 @@ try:
 except ImportError:
     HOLIDAYS_AVAILABLE = False
 
+# 六曜計算モジュールをインポート
+try:
+    import sys
+    from pathlib import Path
+    sys.path.append(str(Path(__file__).parent.parent / 'utils'))
+    from rokuyou import get_rokuyou_name, get_rokuyou_color, get_rokuyou_info
+    ROKUYOU_AVAILABLE = True
+except ImportError:
+    ROKUYOU_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -76,7 +86,13 @@ class SimpleCalendarRenderer:
         self.holidays_country = calendar_settings.get('holidays_country', 'JP')
         self.show_holiday_names = calendar_settings.get('show_holiday_names', False)
         
+        # 六曜設定
+        self.rokuyou_enabled = calendar_settings.get('rokuyou_enabled', True)
+        self.show_rokuyou_names = calendar_settings.get('show_rokuyou_names', True)
+        self.rokuyou_format = calendar_settings.get('rokuyou_format', 'single')
+        
         logger.info(f"Holiday settings: enabled={self.holidays_enabled}, country={self.holidays_country}, show_names={self.show_holiday_names}, holidays_available={HOLIDAYS_AVAILABLE}")
+        logger.info(f"Rokuyou settings: enabled={self.rokuyou_enabled}, show_names={self.show_rokuyou_names}, format={self.rokuyou_format}, rokuyou_available={ROKUYOU_AVAILABLE}")
         
         # 祝日データの初期化
         self.jp_holidays = None
@@ -181,12 +197,34 @@ class SimpleCalendarRenderer:
                             
                             # さらに小さいフォントで祝日名を表示
                             try:
-                                tiny_font = pygame.font.Font(None, 10)
+                                tiny_font = pygame.font.Font(None, 14)  # フォントサイズを10から14に増加
                                 holiday_text = tiny_font.render(holiday_name, True, self.holiday_color)
-                                holiday_rect = holiday_text.get_rect(center=(day_x, day_y + 10))
+                                holiday_rect = holiday_text.get_rect(center=(day_x, day_y + 12))
                                 screen.blit(holiday_text, holiday_rect)
                             except:
                                 pass  # フォントエラーは無視
+                        
+                        # 六曜名を小さく表示（オプション）
+                        if self.rokuyou_enabled and ROKUYOU_AVAILABLE and self.show_rokuyou_names:
+                            try:
+                                rokuyou_name = get_rokuyou_name(current_date, self.rokuyou_format)
+                                
+                                # 六曜表示用のフォント
+                                tiny_font = pygame.font.Font(None, 14)  # フォントサイズを10から14に増加
+                                rokuyou_color = get_rokuyou_color(current_date)
+                                rokuyou_text = tiny_font.render(rokuyou_name, True, rokuyou_color)
+                                
+                                # 祝日名がある場合は下に、ない場合は日付の下に表示
+                                if self.show_holiday_names and self.jp_holidays and current_date in self.jp_holidays:
+                                    rokuyou_y = day_y + 24  # 祝日名の下（位置調整）
+                                else:
+                                    rokuyou_y = day_y + 12  # 日付の下
+                                
+                                rokuyou_rect = rokuyou_text.get_rect(center=(day_x, rokuyou_y))
+                                screen.blit(rokuyou_text, rokuyou_rect)
+                            except Exception as e:
+                                logger.debug(f"Failed to render rokuyou for {current_date}: {e}")
+                                pass  # 六曜表示エラーは無視
                 
                 day_y += 30
             

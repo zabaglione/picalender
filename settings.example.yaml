@@ -36,6 +36,9 @@ calendar:
   holidays_enabled: true   # 祝日表示のON/OFF
   holidays_country: "JP"   # 国コード（JP=日本）
   show_holiday_names: false # 祝日名の表示（true=表示, false=色のみ）
+  rokuyou_enabled: true    # 六曜表示のON/OFF
+  show_rokuyou_names: true # 六曜名の表示（true=表示, false=色のみ）
+  rokuyou_format: "single" # 六曜の表示形式（"full", "short", "single"）
 
 # 背景設定
 background:

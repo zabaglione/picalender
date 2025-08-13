@@ -15,14 +15,23 @@ import traceback
 # プロジェクトルートをPythonパスに追加
 sys.path.insert(0, str(Path(__file__).parent))
 
-# 環境変数の設定
-if 'arm' in os.uname().machine or 'aarch64' in os.uname().machine:
+# 環境変数の設定（macOSは除外）
+if ('arm' in os.uname().machine or 'aarch64' in os.uname().machine) and os.uname().sysname != 'Darwin':
     os.environ.setdefault('SDL_VIDEODRIVER', 'kmsdrm')
 
 # 音声を無効化してALSA警告を防ぐ
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 import pygame
+
+# YAMLライブラリを安全にインポート
+try:
+    import yaml
+    YAML_AVAILABLE = True
+except ImportError:
+    YAML_AVAILABLE = False
+    print("Warning: PyYAML not installed. Using default settings.")
+    print("To install: pip3 install pyyaml")
 
 # src.renderersパッケージを経由せずに直接インポート
 import sys
@@ -53,8 +62,20 @@ class PiCalendarApp:
         self.logger.info(f"Pygame: {pygame.version.ver}")
         self.logger.info("="*50)
         
-        # 基本設定
-        self.settings = {
+        # 設定を読み込み（settings.yamlがあれば使用）
+        self.settings = self._load_settings()
+        
+        # フルスクリーン設定（環境変数で制御可能）
+        if os.environ.get('PICALENDER_WINDOWED', '').lower() == 'true':
+            self.settings['screen']['fullscreen'] = False
+        
+        self.screen = None
+        self.renderers = []
+    
+    def _load_settings(self):
+        """設定ファイルを読み込み"""
+        # デフォルト設定
+        default_settings = {
             'screen': {
                 'width': 1024,
                 'height': 600,
@@ -64,16 +85,53 @@ class PiCalendarApp:
             'ui': {
                 'clock_font_px': 130,
                 'date_font_px': 36,
-                'calendar_font_px': 22
+                'cal_font_px': 22,
+                'calendar_font_px': 22,
+                'weather_font_px': 20
+            },
+            'calendar': {
+                'holidays_enabled': True,
+                'holidays_country': 'JP',
+                'show_holiday_names': False,
+                'rokuyou_enabled': True,
+                'show_rokuyou_names': True,
+                'rokuyou_format': 'single'
             }
         }
         
-        # フルスクリーン設定（環境変数で制御可能）
-        if os.environ.get('PICALENDER_WINDOWED', '').lower() == 'true':
-            self.settings['screen']['fullscreen'] = False
+        # settings.yamlを読み込み（YAMLが利用可能な場合）
+        if YAML_AVAILABLE:
+            settings_file = Path(__file__).parent / 'settings.yaml'
+            if settings_file.exists():
+                try:
+                    with open(settings_file, 'r', encoding='utf-8') as f:
+                        user_settings = yaml.safe_load(f) or {}
+                    
+                    # ユーザー設定をマージ
+                    self._merge_settings(default_settings, user_settings)
+                    self.logger.info(f"Settings loaded from {settings_file}")
+                    
+                    return default_settings
+                except Exception as e:
+                    self.logger.warning(f"Failed to load settings.yaml: {e}")
+                    self.logger.info("Using default settings")
+            else:
+                self.logger.info("settings.yaml not found, using default settings")
+        else:
+            self.logger.info("PyYAML not installed, using default settings")
         
-        self.screen = None
-        self.renderers = []
+        return default_settings
+    
+    def _merge_settings(self, base, override):
+        """設定を再帰的にマージ"""
+        for key, value in override.items():
+            if key in base:
+                if isinstance(base[key], dict) and isinstance(value, dict):
+                    self._merge_settings(base[key], value)
+                else:
+                    base[key] = value
+            else:
+                base[key] = value
     
     def initialize(self):
         """アプリケーションの初期化"""
