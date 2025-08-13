@@ -318,40 +318,35 @@ class SimpleCalendarRenderer:
                         day_rect = day_text.get_rect(center=(day_x, day_y))
                         screen.blit(day_text, day_rect)
                         
-                        # 祝日名を小さく表示（オプション）
-                        if self.show_holiday_names and self.jp_holidays and current_date in self.jp_holidays:
-                            holiday_name = self.jp_holidays[current_date]
-                            # 短縮表示（最初の2文字）
-                            if len(holiday_name) > 2:
-                                holiday_name = holiday_name[:2]
+                        # 今日の場合は補助情報を表示しない（黄色い円と重なるため）
+                        if day != now.day:
+                            # 六曜名を小さく表示（オプション）- 表示順を先に
+                            sub_info_y = day_y + 10  # 日付の下の基本位置
                             
-                            # さらに小さいフォントで祝日名を表示
-                            try:
-                                holiday_text = self.tiny_font.render(holiday_name, True, self.holiday_color)
-                                holiday_rect = holiday_text.get_rect(center=(day_x, day_y + 10))
-                                screen.blit(holiday_text, holiday_rect)
-                            except:
-                                pass  # フォントエラーは無視
-                        
-                        # 六曜名を小さく表示（オプション）
-                        if self.rokuyou_enabled and ROKUYOU_AVAILABLE and self.show_rokuyou_names:
-                            try:
-                                rokuyou_name = get_rokuyou_name(current_date, self.rokuyou_format)
+                            if self.rokuyou_enabled and ROKUYOU_AVAILABLE and self.show_rokuyou_names:
+                                try:
+                                    rokuyou_name = get_rokuyou_name(current_date, self.rokuyou_format)
+                                    rokuyou_color = get_rokuyou_color(current_date)
+                                    rokuyou_text = self.tiny_font.render(rokuyou_name, True, rokuyou_color)
+                                    rokuyou_rect = rokuyou_text.get_rect(center=(day_x, sub_info_y))
+                                    screen.blit(rokuyou_text, rokuyou_rect)
+                                    sub_info_y += 8  # 次の情報のために位置を下げる
+                                except Exception as e:
+                                    logger.debug(f"Failed to render rokuyou for {current_date}: {e}")
+                            
+                            # 祝日名を小さく表示（オプション）- 六曜の後に表示
+                            if self.show_holiday_names and self.jp_holidays and current_date in self.jp_holidays:
+                                holiday_name = self.jp_holidays[current_date]
+                                # 短縮表示（最初の2文字）
+                                if len(holiday_name) > 2:
+                                    holiday_name = holiday_name[:2]
                                 
-                                rokuyou_color = get_rokuyou_color(current_date)
-                                rokuyou_text = self.tiny_font.render(rokuyou_name, True, rokuyou_color)
-                                
-                                # 祝日名がある場合は下に、ない場合は日付の下に表示
-                                if self.show_holiday_names and self.jp_holidays and current_date in self.jp_holidays:
-                                    rokuyou_y = day_y + 18  # 祝日名の下（位置調整、よりコンパクトに）
-                                else:
-                                    rokuyou_y = day_y + 10  # 日付の下（位置調整）
-                                
-                                rokuyou_rect = rokuyou_text.get_rect(center=(day_x, rokuyou_y))
-                                screen.blit(rokuyou_text, rokuyou_rect)
-                            except Exception as e:
-                                logger.debug(f"Failed to render rokuyou for {current_date}: {e}")
-                                pass  # 六曜表示エラーは無視
+                                try:
+                                    holiday_text = self.tiny_font.render(holiday_name, True, self.holiday_color)
+                                    holiday_rect = holiday_text.get_rect(center=(day_x, sub_info_y))
+                                    screen.blit(holiday_text, holiday_rect)
+                                except:
+                                    pass  # フォントエラーは無視
                 
                 day_y += 36  # 行間を適切に（動的高さ計算と同期）
             
