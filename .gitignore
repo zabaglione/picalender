@@ -76,4 +76,4 @@ wallpapers/*.jpeg
 # Temporary files
 tmp/
 temp/
-*.tmp
+*.tmpscreenshot.png
