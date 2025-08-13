@@ -38,7 +38,7 @@ layout:
   moon_phase:
     position: "top-right"     # 位置
     x_offset: -100            # X座標の微調整
-    y_offset: 100             # Y座標の微調整
+    y_offset: 40              # Y座標の微調整（カレンダーとの重複回避）
 
 # UI設定
 ui:
