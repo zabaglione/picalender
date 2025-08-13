@@ -12,10 +12,19 @@ sleep 2
 cd ~/picalender
 git pull
 
+# 仮想環境のアクティベート（存在する場合）
+if [ -d "venv" ]; then
+    echo "📦 仮想環境を使用..."
+    source venv/bin/activate
+    PYTHON_CMD="python3"
+else
+    PYTHON_CMD="python3"
+fi
+
 # 起動
 export DISPLAY=:0
 export PICALENDER_FULLSCREEN=true
-python3 main_x11.py > logs/restart.log 2>&1 &
+$PYTHON_CMD main_x11.py > logs/restart.log 2>&1 &
 
 echo "✅ 完了！(PID: $!)"
 echo "📝 ログ: tail -f ~/picalender/logs/restart.log"

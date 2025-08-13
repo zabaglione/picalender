@@ -45,10 +45,20 @@ export PICALENDER_FULLSCREEN=true
 # PiCalendarディレクトリに移動
 cd /home/$USER/picalender
 
-# X11版をフルスクリーンで起動
-python3 main_x11.py >> $LOG_FILE 2>&1 &
+# 仮想環境のアクティベート（存在する場合）
+if [ -d "venv" ]; then
+    echo "$(date): Activating virtual environment..." >> $LOG_FILE
+    source venv/bin/activate
+    PYTHON_CMD="python3"
+else
+    echo "$(date): Using system Python" >> $LOG_FILE
+    PYTHON_CMD="python3"
+fi
 
-echo "$(date): PiCalendar started" >> $LOG_FILE
+# X11版をフルスクリーンで起動
+$PYTHON_CMD main_x11.py >> $LOG_FILE 2>&1 &
+
+echo "$(date): PiCalendar started with PID $!" >> $LOG_FILE
 EOF
 
 chmod +x "$INSTALL_DIR/start_fullscreen.sh"

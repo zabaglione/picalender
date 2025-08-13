@@ -75,12 +75,28 @@ echo -e "${GREEN}✓ ログファイル: $LOG_FILE${NC}"
 # 5. PiCalendarを起動
 echo -e "${YELLOW}[5/5] PiCalendarを起動...${NC}"
 
+# 仮想環境のアクティベート（存在する場合）
+if [ -d "~/picalender/venv" ]; then
+    echo -e "${YELLOW}仮想環境をアクティベート...${NC}"
+    source ~/picalender/venv/bin/activate
+    echo -e "${GREEN}✓ 仮想環境をアクティベートしました${NC}"
+    PYTHON_CMD="python3"
+elif [ -d "/home/$CURRENT_USER/picalender/venv" ]; then
+    echo -e "${YELLOW}仮想環境をアクティベート...${NC}"
+    source /home/$CURRENT_USER/picalender/venv/bin/activate
+    echo -e "${GREEN}✓ 仮想環境をアクティベートしました${NC}"
+    PYTHON_CMD="python3"
+else
+    echo -e "${YELLOW}! 仮想環境が見つかりません。システムPythonを使用${NC}"
+    PYTHON_CMD="python3"
+fi
+
 # 環境変数設定
 export DISPLAY=:0
 export PICALENDER_FULLSCREEN=true
 
 # 起動
-nohup python3 ~/picalender/main_x11.py > "$LOG_FILE" 2>&1 &
+nohup $PYTHON_CMD ~/picalender/main_x11.py > "$LOG_FILE" 2>&1 &
 NEW_PID=$!
 
 # 起動確認（3秒待機）
