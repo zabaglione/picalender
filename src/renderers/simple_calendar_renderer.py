@@ -189,7 +189,7 @@ class SimpleCalendarRenderer:
         
         # 基本サイズ計算（六曜・祝日名を考慮）
         base_height = 80   # ヘッダー部分（月名+曜日）
-        row_height = 42    # 各行の高さ（日付＋六曜＋祝日名のスペース）
+        row_height = 48    # 各行の高さ（日付＋六曜＋祝日名のスペース）- さらに広げる
         bottom_margin = 10  # 下部余白
         
         # 高さ計算
@@ -197,7 +197,7 @@ class SimpleCalendarRenderer:
         
         # 最小・最大制限
         min_height = 250
-        max_height = 350  # 最大値を少し増やす
+        max_height = 380  # 最大値を増やす（6週×48px対応）
         final_height = max(min_height, min(max_height, calculated_height))
         
         logger.info(f"Calendar dynamic sizing: {num_weeks} weeks, calculated={calculated_height}px, final={final_height}px")
@@ -348,7 +348,7 @@ class SimpleCalendarRenderer:
                                 except:
                                     pass  # フォントエラーは無視
                 
-                day_y += 42  # 行間を広げて六曜・祝日名との重複を防ぐ
+                day_y += 48  # 行間を広げて六曜・祝日名との重複を防ぐ（row_heightと同期）
             
         except Exception as e:
             logger.error(f"Failed to render calendar: {e}")

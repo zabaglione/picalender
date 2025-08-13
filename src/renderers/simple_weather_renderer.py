@@ -453,14 +453,14 @@ class SimpleWeatherRenderer:
         
         # カレンダーレンダラーと同じ計算ロジック（更新版）
         base_height = 80
-        row_height = 42  # カレンダーと同期
+        row_height = 48  # カレンダーと同期（さらに広げた版）
         bottom_margin = 10
         
         calculated_height = base_height + (num_weeks * row_height) + bottom_margin
         
         # 最小・最大制限（更新版）
         min_height = 250
-        max_height = 350  # カレンダーと同期
+        max_height = 380  # カレンダーと同期（6週×48px対応）
         return max(min_height, min(max_height, calculated_height))
     
     def cleanup(self):
