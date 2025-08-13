@@ -60,8 +60,8 @@ echo "終了するには: ESC または Q キーを押してください"
 echo "フルスクリーン切り替え: F11 または F キー"
 echo ""
 
-# X11版を実行
-python3 main_x11.py
+# 統合版を実行（X11環境は自動検出）
+python3 main.py
 
 echo ""
 echo -e "${GREEN}PiCalendarを終了しました${NC}"

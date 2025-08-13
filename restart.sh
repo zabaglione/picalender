@@ -114,8 +114,8 @@ fi
 export DISPLAY=:0
 export PICALENDER_FULLSCREEN=true
 
-# 起動
-nohup $PYTHON_CMD ~/picalender/main_x11.py > "$LOG_FILE" 2>&1 &
+# 起動（統合版を使用）
+nohup $PYTHON_CMD ~/picalender/main.py > "$LOG_FILE" 2>&1 &
 NEW_PID=$!
 
 # 起動確認（3秒待機）
@@ -132,7 +132,7 @@ if ps -p $NEW_PID > /dev/null; then
     echo "   tail -f $LOG_FILE"
     echo ""
     echo "🔍 プロセス確認:"
-    echo "   ps aux | grep main_x11"
+    echo "   ps aux | grep main.py"
     echo ""
     
     # 最初の数行のログを表示

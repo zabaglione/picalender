@@ -15,12 +15,41 @@ import traceback
 # プロジェクトルートをPythonパスに追加
 sys.path.insert(0, str(Path(__file__).parent))
 
-# 環境変数の設定（macOSは除外）
-if ('arm' in os.uname().machine or 'aarch64' in os.uname().machine) and os.uname().sysname != 'Darwin':
-    os.environ.setdefault('SDL_VIDEODRIVER', 'kmsdrm')
+# 環境自動検出と設定
+def detect_and_setup_environment():
+    """実行環境を自動検出してSDLドライバーを設定"""
+    machine = os.uname().machine
+    system = os.uname().sysname
+    
+    # 音声を無効化（共通設定）
+    os.environ['SDL_AUDIODRIVER'] = 'dummy'
+    
+    # X11環境が利用可能かチェック
+    has_display = bool(os.environ.get('DISPLAY'))
+    
+    if system == 'Darwin':  # macOS
+        # macOSでは常にdefaultドライバー（Cocoa）を使用
+        logging.info("Detected macOS - using default video driver")
+        return 'macos'
+    elif has_display and os.path.exists('/usr/bin/X'):
+        # X11環境が利用可能
+        os.environ['SDL_VIDEODRIVER'] = 'x11'
+        if not os.environ.get('DISPLAY'):
+            os.environ['DISPLAY'] = ':0'
+        logging.info("Detected X11 environment")
+        return 'x11'
+    elif 'arm' in machine or 'aarch64' in machine:
+        # Raspberry Pi系でX11が無い場合はKMSDRM
+        os.environ.setdefault('SDL_VIDEODRIVER', 'kmsdrm')
+        logging.info("Detected ARM system - using KMSDRM")
+        return 'kmsdrm'
+    else:
+        # その他（通常のLinux等）
+        logging.info("Using default video driver")
+        return 'default'
 
-# 音声を無効化してALSA警告を防ぐ
-os.environ['SDL_AUDIODRIVER'] = 'dummy'
+# 環境検出実行
+environment_type = detect_and_setup_environment()
 
 import pygame
 
@@ -39,11 +68,13 @@ sys.path.append(str(Path(__file__).parent / 'src' / 'renderers'))
 from simple_clock_renderer import SimpleClockRenderer
 from simple_date_renderer import SimpleDateRenderer
 from simple_calendar_renderer import SimpleCalendarRenderer
+from simple_weather_renderer import SimpleWeatherRenderer
+from simple_wallpaper_renderer import SimpleWallpaperRenderer
 from simple_moon_renderer import SimpleMoonRenderer
 
 
 class PiCalendarApp:
-    """PiCalendarアプリケーション"""
+    """PiCalendar統合アプリケーション（KMSDRM/X11両対応）"""
     
     def __init__(self):
         """アプリケーションの初期化"""
@@ -58,9 +89,11 @@ class PiCalendarApp:
         self.logger = logging.getLogger(__name__)
         
         self.logger.info("="*50)
-        self.logger.info("PiCalendar Application Starting")
+        self.logger.info(f"PiCalendar Application Starting ({environment_type.upper()} mode)")
         self.logger.info(f"Python: {sys.version}")
         self.logger.info(f"Pygame: {pygame.version.ver}")
+        self.logger.info(f"SDL Video Driver: {os.environ.get('SDL_VIDEODRIVER', 'default')}")
+        self.logger.info(f"Display: {os.environ.get('DISPLAY', 'None')}")
         self.logger.info("="*50)
         
         # 設定を読み込み（settings.yamlがあれば使用）
@@ -69,9 +102,13 @@ class PiCalendarApp:
         # フルスクリーン設定（環境変数で制御可能）
         if os.environ.get('PICALENDER_WINDOWED', '').lower() == 'true':
             self.settings['screen']['fullscreen'] = False
+        if os.environ.get('PICALENDER_FULLSCREEN', '').lower() == 'true':
+            self.settings['screen']['fullscreen'] = True
         
         self.screen = None
         self.renderers = []
+        self.fullscreen = False
+        self.environment_type = environment_type
     
     def _load_settings(self):
         """設定ファイルを読み込み"""
@@ -86,9 +123,19 @@ class PiCalendarApp:
             'ui': {
                 'clock_font_px': 130,
                 'date_font_px': 36,
-                'cal_font_px': 22,
                 'calendar_font_px': 22,
                 'weather_font_px': 20
+            },
+            'wallpaper': {
+                'rotation_seconds': 300,
+                'fit_mode': 'fill'
+            },
+            'weather': {
+                'location': {
+                    'lat': 35.681236,
+                    'lon': 139.767125
+                },
+                'refresh_sec': 1800
             },
             'calendar': {
                 'holidays_enabled': True,
@@ -148,18 +195,38 @@ class PiCalendarApp:
             width = self.settings['screen']['width']
             height = self.settings['screen']['height']
             
-            if self.settings['screen']['fullscreen']:
-                self.logger.info(f"Setting fullscreen mode: {width}x{height}")
-                self.screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN)
-            else:
+            # 画面モード設定
+            if self.environment_type == 'x11':
+                # X11環境では最初はウィンドウモードで起動
                 self.logger.info(f"Setting windowed mode: {width}x{height}")
                 self.screen = pygame.display.set_mode((width, height))
-            
-            pygame.display.set_caption("PiCalendar")
-            pygame.mouse.set_visible(False)  # マウスカーソルを非表示
+                pygame.display.set_caption("PiCalendar")
+                
+                # フルスクリーン設定がある場合は切り替え
+                if self.settings['screen']['fullscreen']:
+                    self.toggle_fullscreen()
+            else:
+                # KMSDRM等では直接フルスクリーン
+                if self.settings['screen']['fullscreen']:
+                    self.logger.info(f"Setting fullscreen mode: {width}x{height}")
+                    self.screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN)
+                    pygame.mouse.set_visible(False)
+                else:
+                    self.logger.info(f"Setting windowed mode: {width}x{height}")
+                    self.screen = pygame.display.set_mode((width, height))
+                
+                pygame.display.set_caption("PiCalendar")
             
             # レンダラー初期化
             self.logger.info("Initializing renderers...")
+            
+            # 壁紙レンダラー（最初に初期化）
+            try:
+                wallpaper_renderer = SimpleWallpaperRenderer(self.settings)
+                self.renderers.append(('wallpaper', wallpaper_renderer))
+                self.logger.info("Wallpaper renderer initialized")
+            except Exception as e:
+                self.logger.error(f"Failed to initialize wallpaper renderer: {e}")
             
             # 時計レンダラー
             try:
@@ -185,6 +252,14 @@ class PiCalendarApp:
             except Exception as e:
                 self.logger.error(f"Failed to initialize calendar renderer: {e}")
             
+            # 天気レンダラー
+            try:
+                weather_renderer = SimpleWeatherRenderer(self.settings)
+                self.renderers.append(('weather', weather_renderer))
+                self.logger.info("Weather renderer initialized")
+            except Exception as e:
+                self.logger.error(f"Failed to initialize weather renderer: {e}")
+            
             # 月相レンダラー
             try:
                 moon_renderer = SimpleMoonRenderer(self.settings)
@@ -200,6 +275,26 @@ class PiCalendarApp:
             self.logger.error(f"Initialization failed: {e}")
             self.logger.error(traceback.format_exc())
             return False
+    
+    def toggle_fullscreen(self):
+        """フルスクリーン切り替え（X11環境用）"""
+        if self.environment_type != 'x11':
+            self.logger.warning("Fullscreen toggle is only supported in X11 environment")
+            return
+        
+        width = self.settings['screen']['width']
+        height = self.settings['screen']['height']
+        
+        self.fullscreen = not self.fullscreen
+        
+        if self.fullscreen:
+            self.logger.info("Switching to fullscreen mode")
+            self.screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN)
+            pygame.mouse.set_visible(False)
+        else:
+            self.logger.info("Switching to windowed mode")
+            self.screen = pygame.display.set_mode((width, height))
+            pygame.mouse.set_visible(True)
     
     def draw_gradient_background(self, screen):
         """グラデーション背景を描画"""
@@ -265,6 +360,10 @@ class PiCalendarApp:
                             self.running = False
                         elif event.key == pygame.K_q:
                             self.running = False
+                        elif event.key == pygame.K_F11 and self.environment_type == 'x11':
+                            self.toggle_fullscreen()
+                        elif event.key == pygame.K_f and self.environment_type == 'x11':
+                            self.toggle_fullscreen()
                 
                 # 更新が必要なレンダラーを判定
                 need_update = False
@@ -337,7 +436,7 @@ class PiCalendarApp:
                     pygame.display.flip()
                 
                 # FPS制御
-                self.clock.tick(fps)
+                self.clock.tick(base_fps)
                 frame_count += 1
                 
                 # 定期ログ（30秒ごと）
@@ -358,6 +457,13 @@ class PiCalendarApp:
     def cleanup(self):
         """クリーンアップ処理"""
         self.logger.info("Cleaning up...")
+        # レンダラーのクリーンアップ
+        for name, renderer in self.renderers:
+            if hasattr(renderer, 'cleanup'):
+                try:
+                    renderer.cleanup()
+                except Exception as e:
+                    self.logger.error(f"Failed to cleanup {name}: {e}")
         pygame.quit()
         self.logger.info("PiCalendar stopped")
     
