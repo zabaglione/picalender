@@ -23,7 +23,15 @@ os.environ['DISPLAY'] = ':0'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 import pygame
-import yaml
+
+# YAMLライブラリを安全にインポート
+try:
+    import yaml
+    YAML_AVAILABLE = True
+except ImportError:
+    YAML_AVAILABLE = False
+    print("Warning: PyYAML not installed. Using default settings.")
+    print("To install: pip3 install pyyaml")
 
 # src.renderersパッケージを経由せずに直接インポート
 import sys
@@ -97,23 +105,26 @@ class PiCalendarApp:
             }
         }
         
-        # settings.yamlを読み込み
-        settings_file = Path(__file__).parent / 'settings.yaml'
-        if settings_file.exists():
-            try:
-                with open(settings_file, 'r', encoding='utf-8') as f:
-                    user_settings = yaml.safe_load(f) or {}
-                
-                # ユーザー設定をマージ
-                self._merge_settings(default_settings, user_settings)
-                self.logger.info(f"Settings loaded from {settings_file}")
-                
-                return default_settings
-            except Exception as e:
-                self.logger.warning(f"Failed to load settings.yaml: {e}")
-                self.logger.info("Using default settings")
+        # settings.yamlを読み込み（YAMLが利用可能な場合）
+        if YAML_AVAILABLE:
+            settings_file = Path(__file__).parent / 'settings.yaml'
+            if settings_file.exists():
+                try:
+                    with open(settings_file, 'r', encoding='utf-8') as f:
+                        user_settings = yaml.safe_load(f) or {}
+                    
+                    # ユーザー設定をマージ
+                    self._merge_settings(default_settings, user_settings)
+                    self.logger.info(f"Settings loaded from {settings_file}")
+                    
+                    return default_settings
+                except Exception as e:
+                    self.logger.warning(f"Failed to load settings.yaml: {e}")
+                    self.logger.info("Using default settings")
+            else:
+                self.logger.info("settings.yaml not found, using default settings")
         else:
-            self.logger.info("settings.yaml not found, using default settings")
+            self.logger.info("PyYAML not installed, using default settings")
         
         return default_settings
     
