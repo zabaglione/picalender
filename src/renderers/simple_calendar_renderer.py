@@ -187,17 +187,17 @@ class SimpleCalendarRenderer:
         cal_obj = cal.monthcalendar(now.year, now.month)
         num_weeks = len(cal_obj)
         
-        # 基本サイズ計算（よりコンパクトに）
-        base_height = 80   # ヘッダー部分（月名+曜日）を縮小
-        row_height = 36    # 各行の高さを縮小（六曜含む）
-        bottom_margin = 10  # 下部余白を縮小
+        # 基本サイズ計算（六曜・祝日名を考慮）
+        base_height = 80   # ヘッダー部分（月名+曜日）
+        row_height = 42    # 各行の高さ（日付＋六曜＋祝日名のスペース）
+        bottom_margin = 10  # 下部余白
         
-        # 六曜表示の場合も行高さに含まれているため、追加高さは不要
+        # 高さ計算
         calculated_height = base_height + (num_weeks * row_height) + bottom_margin
         
-        # 最小・最大制限（よりコンパクトに）
+        # 最小・最大制限
         min_height = 250
-        max_height = 330
+        max_height = 350  # 最大値を少し増やす
         final_height = max(min_height, min(max_height, calculated_height))
         
         logger.info(f"Calendar dynamic sizing: {num_weeks} weeks, calculated={calculated_height}px, final={final_height}px")
@@ -321,7 +321,7 @@ class SimpleCalendarRenderer:
                         # 今日の場合は補助情報を表示しない（黄色い円と重なるため）
                         if day != now.day:
                             # 六曜名を小さく表示（オプション）- 表示順を先に
-                            sub_info_y = day_y + 10  # 日付の下の基本位置
+                            sub_info_y = day_y + 11  # 日付の下の基本位置（少し余裕を持たせる）
                             
                             if self.rokuyou_enabled and ROKUYOU_AVAILABLE and self.show_rokuyou_names:
                                 try:
@@ -330,7 +330,7 @@ class SimpleCalendarRenderer:
                                     rokuyou_text = self.tiny_font.render(rokuyou_name, True, rokuyou_color)
                                     rokuyou_rect = rokuyou_text.get_rect(center=(day_x, sub_info_y))
                                     screen.blit(rokuyou_text, rokuyou_rect)
-                                    sub_info_y += 8  # 次の情報のために位置を下げる
+                                    sub_info_y += 9  # 次の情報のために位置を下げる（少し間隔を広げる）
                                 except Exception as e:
                                     logger.debug(f"Failed to render rokuyou for {current_date}: {e}")
                             
@@ -348,7 +348,7 @@ class SimpleCalendarRenderer:
                                 except:
                                     pass  # フォントエラーは無視
                 
-                day_y += 36  # 行間を適切に（動的高さ計算と同期）
+                day_y += 42  # 行間を広げて六曜・祝日名との重複を防ぐ
             
         except Exception as e:
             logger.error(f"Failed to render calendar: {e}")
