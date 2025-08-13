@@ -93,7 +93,7 @@ screen:
 
 ```bash
 cd ~/picalender
-./quick_restart.sh
+./scripts/quick_restart.sh
 ```
 
 ## ⚠️ 注意事項

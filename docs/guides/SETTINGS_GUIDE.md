@@ -213,7 +213,7 @@ cache:
 
 ```bash
 # クイック再起動
-./quick_restart.sh
+./scripts/quick_restart.sh
 
 # または手動で
 pkill -f main.py
@@ -256,7 +256,7 @@ cp settings.yaml.backup settings.yaml
 ## ❓ よくある質問
 
 **Q: 設定が反映されない**
-A: アプリケーションの再起動が必要です。`./quick_restart.sh`を実行してください。
+A: アプリケーションの再起動が必要です。`./scripts/quick_restart.sh`を実行してください。
 
 **Q: YAMLエラーが出る**
 A: インデント（スペース）が正しいか確認してください。タブは使用できません。

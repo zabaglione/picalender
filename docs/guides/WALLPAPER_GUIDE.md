@@ -133,7 +133,7 @@ tail -f ~/picalender/logs/restart.log | grep -i wallpaper
 
 ```bash
 # 最新版を取得して再起動
-cd ~/picalender && git pull && ./quick_restart.sh
+cd ~/picalender && git pull && ./scripts/quick_restart.sh
 ```
 
 壁紙が自動的に切り替わることを確認してください。

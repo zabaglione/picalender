@@ -38,7 +38,7 @@ python3 theme_manager.py list
 python3 theme_manager.py apply night
 
 # 再起動して反映
-./quick_restart.sh
+./scripts/quick_restart.sh
 ```
 
 ### 現在のテーマを確認
@@ -152,7 +152,7 @@ python3 theme_manager.py apply night
 ```bash
 # バックアップから復元
 cp settings.yaml.backup settings.yaml
-./quick_restart.sh
+./scripts/quick_restart.sh
 ```
 
 ## 🎯 おすすめの使い方

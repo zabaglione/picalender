@@ -72,7 +72,7 @@ EOF
 chmod +x restart.sh
 
 # 実行
-./restart.sh
+./scripts/restart.sh
 ```
 
 ## 📝 ログの確認方法

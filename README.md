@@ -115,24 +115,22 @@ sudo systemctl start picalender
 source venv/bin/activate
 python main.py
 
-# システムワイドインストールの場合
+# 統合版で起動（環境自動検出）
 python3 main.py
 
-# X Window環境で起動
-python3 main_x11.py
-
-# デバッグモードで起動
-python3 main.py --debug
+# 環境変数での制御
+PICALENDER_FULLSCREEN=true python3 main.py
+PICALENDER_WINDOWED=true python3 main.py
 ```
 
 ### クイック再起動
 
 ```bash
 # 簡単再起動スクリプト（仮想環境自動検出）
-./quick_restart.sh
+./scripts/quick_restart.sh
 
 # または従来のrestart.sh
-./restart.sh
+./scripts/restart.sh
 ```
 
 ### サービス管理
@@ -204,7 +202,7 @@ python3 theme_manager.py list
 
 # テーマを適用（例：ナイトモード）
 python3 theme_manager.py apply night
-./quick_restart.sh
+./scripts/quick_restart.sh
 
 # 現在のテーマを確認
 python3 theme_manager.py current

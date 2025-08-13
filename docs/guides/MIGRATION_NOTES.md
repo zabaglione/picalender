@@ -60,8 +60,8 @@ python3 main.py
 ## 互換性
 
 **従来のコマンド**は全て動作します：
-- `./restart.sh`
-- `./quick_restart.sh` 
+- `./scripts/restart.sh`
+- `./scripts/quick_restart.sh` 
 - `scripts/run_on_x11.sh`
 
 統合により、どの環境でも同じコマンドで実行可能になりました。

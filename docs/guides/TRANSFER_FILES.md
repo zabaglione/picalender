@@ -139,7 +139,7 @@ ls -la ~/picalender/wallpapers/
 
 # PiCalendarを再起動して確認
 cd ~/picalender
-./quick_restart.sh
+./scripts/quick_restart.sh
 ```
 
 ## 💡 ヒント
@@ -159,7 +159,7 @@ ssh zabaglione@192.168.0.27
 cd ~/picalender
 python3 scripts/generate_sample_wallpapers.py
 ls wallpapers/  # 6つの壁紙が生成される
-./quick_restart.sh
+./scripts/quick_restart.sh
 ```
 
 これでまず動作確認してから、お好みの壁紙を追加してください。

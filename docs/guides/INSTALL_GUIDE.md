@@ -24,7 +24,7 @@ git clone https://github.com/zabaglione/picalender.git
 cd picalender
 
 # インストールスクリプトを実行
-./install.sh
+./scripts/install.sh
 ```
 
 ## 📝 詳細インストール手順
@@ -149,7 +149,7 @@ python3 theme_manager.py list
 python3 theme_manager.py apply night
 
 # 再起動して反映
-./quick_restart.sh
+./scripts/quick_restart.sh
 ```
 
 ## ⚠️ トラブルシューティング
@@ -231,7 +231,7 @@ sudo systemctl enable vncserver-x11-serviced
 
 2. 診断スクリプトを実行：
    ```bash
-   ./diagnose.sh
+   ./scripts/diagnose.sh
    ```
 
 3. GitHubでIssueを作成：

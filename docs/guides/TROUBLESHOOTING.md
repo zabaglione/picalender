@@ -76,7 +76,7 @@ pip install -r requirements.txt
 最新版では固定位置描画で解決済み。更新してください：
 ```bash
 git pull
-./quick_restart.sh
+./scripts/quick_restart.sh
 ```
 
 #### 文字が重なって表示される
@@ -303,7 +303,7 @@ background:
 
 アプリケーションを再起動：
 ```bash
-./quick_restart.sh
+./scripts/quick_restart.sh
 ```
 
 ## 🔍 診断ツール
@@ -312,7 +312,7 @@ background:
 
 ```bash
 # 診断スクリプトを実行
-./diagnose.sh
+./scripts/diagnose.sh
 ```
 
 ### 手動診断コマンド
@@ -357,7 +357,7 @@ cd ~
 mv picalender picalender.bak
 git clone https://github.com/zabaglione/picalender.git
 cd picalender
-./install.sh
+./scripts/install.sh
 ```
 
 3. **Issueを作成**
