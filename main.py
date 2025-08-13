@@ -274,6 +274,7 @@ class PiCalendarApp:
                 self.logger.error(f"Failed to initialize moon renderer: {e}")
                 import traceback
                 self.logger.error(f"Traceback: {traceback.format_exc()}")
+                # 月齢レンダラーの初期化失敗は致命的ではないので続行
             
             self.logger.info("Initialization complete")
             return True

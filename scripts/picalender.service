@@ -15,18 +15,18 @@ Environment="SDL_KMSDRM_DEVICE_INDEX=0"
 Environment="SDL_RENDER_DRIVER=software"
 Environment="DISPLAY=:0"
 Environment="PYTHONUNBUFFERED=1"
-Environment="PYTHONPATH=/home/pi/picalender"
+Environment="PYTHONPATH=/home/pi/picalender:/home/pi/picalender/src:/home/pi/picalender/src/renderers"
 
-# 起動前の待機時間（ネットワークとディスプレイの準備）
-ExecStartPre=/bin/sleep 10
+# 起動前の待機時間（ネットワークとディスプレイの準備を短縮）
+ExecStartPre=/bin/sleep 3
 
-# メインアプリケーション起動
-ExecStart=/usr/bin/python3 /home/pi/picalender/main.py
+# メインアプリケーション起動（起動スクリプト経由）
+ExecStart=/home/pi/picalender/scripts/start_service.sh
 
 # 再起動設定
-Restart=always
-RestartSec=5
-StartLimitBurst=5
+Restart=on-failure
+RestartSec=2
+StartLimitBurst=3
 
 # ログ設定
 StandardOutput=journal
