@@ -238,9 +238,10 @@ class SimpleMoonRenderer:
         shadow_color = (40, 40, 50)   # 暗い影の色
         
         # 作業用サーフェースを作成（透明背景）
-        moon_surface = pygame.Surface((radius * 2 + 4, radius * 2 + 4), pygame.SRCALPHA)
-        center_x = radius + 2
-        center_y = radius + 2
+        surface_size = radius * 2 + 4
+        moon_surface = pygame.Surface((surface_size, surface_size), pygame.SRCALPHA)
+        center_x = surface_size // 2
+        center_y = surface_size // 2
         
         # 月齢を0-1の範囲に正規化
         phase = moon_age / 29.53
@@ -251,31 +252,34 @@ class SimpleMoonRenderer:
             pygame.draw.circle(moon_surface, (60, 60, 60), (center_x, center_y), radius, 1)
             
         elif phase < 0.5:  # 新月から満月へ（月齢1-14.75）
-            # 基本の明るい円を描画
+            # 右側が明るく、左側が暗い
+            
+            # まず明るい円を描画
             pygame.draw.circle(moon_surface, moon_color, (center_x, center_y), radius)
             
-            # 左側に影を描画（三日月形を作る）
-            shadow_ratio = 1 - (phase * 2)  # 1から0へ
+            # 左側に影を作る
+            shadow_progress = 1 - (phase * 2)  # 1から0へ（満月に近づくにつれて影が小さくなる）
             
-            if shadow_ratio > 0.01:  # 影がある場合
-                # 左半分をクリップ
-                clip_rect = pygame.Rect(0, 0, center_x, radius * 2 + 4)
-                moon_surface.set_clip(clip_rect)
+            if shadow_progress > 0.01:
+                # 影のオフセットを計算（月齢によって変化）
+                shadow_offset = int(radius * shadow_progress)
                 
-                # 影の楕円の幅を計算
-                ellipse_width = int(radius * 2 * abs(shadow_ratio))
-                if ellipse_width > 0:
-                    ellipse_rect = pygame.Rect(
-                        center_x - ellipse_width // 2,
-                        center_y - radius,
-                        ellipse_width,
-                        radius * 2
-                    )
-                    # 楕円を塗りつぶして描画
-                    pygame.draw.ellipse(moon_surface, shadow_color, ellipse_rect, 0)
+                # 左側の影用の円を描画
+                shadow_surface = pygame.Surface((surface_size, surface_size), pygame.SRCALPHA)
+                
+                # 左側の領域をクリップ
+                clip_rect = pygame.Rect(0, 0, center_x, surface_size)
+                shadow_surface.set_clip(clip_rect)
+                
+                # 影の円を描画（左にオフセット）
+                shadow_x = center_x - shadow_offset
+                pygame.draw.circle(shadow_surface, shadow_color, (shadow_x, center_y), radius)
                 
                 # クリッピングを解除
-                moon_surface.set_clip(None)
+                shadow_surface.set_clip(None)
+                
+                # 影を月の上に重ねる
+                moon_surface.blit(shadow_surface, (0, 0))
                 
         elif phase < 0.53:  # 満月（月齢14.75-15.5）
             # 全体を明るく
@@ -286,55 +290,60 @@ class SimpleMoonRenderer:
                              radius // 4)
                              
         else:  # 満月から新月へ（月齢15.5-29.53）
-            # phaseが0.5を超えた分を計算
+            # 左側が暗く、右側が明るい
             waning_phase = (phase - 0.5) * 2  # 0から1へ
             
             if waning_phase < 0.5:  # 満月直後～下弦（月齢15.5-22）
-                # 基本の明るい円を描画
+                # 基本は明るい円
                 pygame.draw.circle(moon_surface, moon_color, (center_x, center_y), radius)
                 
                 # 左側に影を増やしていく
-                shadow_width = int(radius * 2 * waning_phase)
+                shadow_progress = waning_phase * 2  # 0から1へ
+                shadow_offset = int(radius * shadow_progress)
                 
-                if shadow_width > 0:
-                    # 左半分をクリップ
-                    clip_rect = pygame.Rect(0, 0, center_x, radius * 2 + 4)
-                    moon_surface.set_clip(clip_rect)
+                if shadow_offset > 0:
+                    # 影用のサーフェース
+                    shadow_surface = pygame.Surface((surface_size, surface_size), pygame.SRCALPHA)
                     
-                    ellipse_rect = pygame.Rect(
-                        center_x - shadow_width // 2,
-                        center_y - radius,
-                        shadow_width,
-                        radius * 2
-                    )
-                    pygame.draw.ellipse(moon_surface, shadow_color, ellipse_rect, 0)
+                    # 左側の領域をクリップ
+                    clip_rect = pygame.Rect(0, 0, center_x, surface_size)
+                    shadow_surface.set_clip(clip_rect)
+                    
+                    # 影の円を描画（左にオフセット）
+                    shadow_x = center_x - shadow_offset
+                    pygame.draw.circle(shadow_surface, shadow_color, (shadow_x, center_y), radius)
                     
                     # クリッピングを解除
-                    moon_surface.set_clip(None)
+                    shadow_surface.set_clip(None)
+                    
+                    # 影を月の上に重ねる
+                    moon_surface.blit(shadow_surface, (0, 0))
                     
             else:  # 下弦から新月へ（月齢22-29.53）
                 # 全体を暗くする
                 pygame.draw.circle(moon_surface, shadow_color, (center_x, center_y), radius)
                 
-                # 右側に明るい三日月を描画
-                light_ratio = 2 - waning_phase * 2  # 1から0へ
-                bright_width = int(radius * 2 * light_ratio)
+                # 右側に明るい部分を作る
+                light_progress = 2 - waning_phase * 2  # 1から0へ
+                light_offset = int(radius * light_progress)
                 
-                if bright_width > 0:
-                    # 右半分をクリップ
-                    clip_rect = pygame.Rect(center_x, 0, center_x + 2, radius * 2 + 4)
-                    moon_surface.set_clip(clip_rect)
+                if light_offset > 0:
+                    # 明るい部分用のサーフェース
+                    light_surface = pygame.Surface((surface_size, surface_size), pygame.SRCALPHA)
                     
-                    ellipse_rect = pygame.Rect(
-                        center_x - bright_width // 2,
-                        center_y - radius,
-                        bright_width,
-                        radius * 2
-                    )
-                    pygame.draw.ellipse(moon_surface, moon_color, ellipse_rect, 0)
+                    # 右側の領域をクリップ
+                    clip_rect = pygame.Rect(center_x, 0, center_x, surface_size)
+                    light_surface.set_clip(clip_rect)
+                    
+                    # 明るい円を描画（右にオフセット）
+                    light_x = center_x + light_offset
+                    pygame.draw.circle(light_surface, moon_color, (light_x, center_y), radius)
                     
                     # クリッピングを解除
-                    moon_surface.set_clip(None)
+                    light_surface.set_clip(None)
+                    
+                    # 明るい部分を月の上に重ねる
+                    moon_surface.blit(light_surface, (0, 0))
         
         # 輪郭線を描画
         pygame.draw.circle(moon_surface, (200, 200, 180), (center_x, center_y), radius, 1)
