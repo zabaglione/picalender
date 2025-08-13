@@ -76,18 +76,23 @@ echo -e "${GREEN}✓ ログファイル: $LOG_FILE${NC}"
 echo -e "${YELLOW}[5/5] PiCalendarを起動...${NC}"
 
 # 仮想環境のアクティベート（存在する場合）
-if [ -d "~/picalender/venv" ]; then
+# 既にcd ~/picalenderしているので、カレントディレクトリをまずチェック
+if [ -d "venv" ]; then
     echo -e "${YELLOW}仮想環境をアクティベート...${NC}"
-    source ~/picalender/venv/bin/activate
+    source venv/bin/activate
     echo -e "${GREEN}✓ 仮想環境をアクティベートしました${NC}"
     PYTHON_CMD="python3"
+    # アクティベート確認
+    which python3
 elif [ -d "/home/$CURRENT_USER/picalender/venv" ]; then
-    echo -e "${YELLOW}仮想環境をアクティベート...${NC}"
-    source /home/$CURRENT_USER/picalender/venv/bin/activate
+    echo -e "${YELLOW}仮想環境をアクティベート（フルパス）...${NC}"
+    source "/home/$CURRENT_USER/picalender/venv/bin/activate"
     echo -e "${GREEN}✓ 仮想環境をアクティベートしました${NC}"
     PYTHON_CMD="python3"
 else
     echo -e "${YELLOW}! 仮想環境が見つかりません。システムPythonを使用${NC}"
+    echo -e "${YELLOW}  検索パス: $(pwd)/venv${NC}"
+    echo -e "${YELLOW}  検索パス: /home/$CURRENT_USER/picalender/venv${NC}"
     PYTHON_CMD="python3"
 fi
 
