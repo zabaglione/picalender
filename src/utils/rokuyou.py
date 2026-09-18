@@ -48,61 +48,11 @@ ROKUYOU_SINGLE = [
 ]
 
 def calculate_rokuyou(target_date: date) -> int:
-    """
-    指定された日付の六曜を計算
-    
-    六曜の計算方法：
-    旧暦の月と日を足した数を6で割った余りで決まる
-    (月 + 日) % 6 = 六曜番号
-    
-    Args:
-        target_date: 計算対象の日付
-        
-    Returns:
-        int: 六曜番号 (0-5)
-    """
-    # 簡易的な旧暦計算（実用レベル）
-    # 新暦から旧暦への概算変換
-    
-    year = target_date.year
-    month = target_date.month
-    day = target_date.day
-    
-    # 1900年を基準とした簡易計算
-    # 実際の旧暦計算は複雑ですが、六曜目的では概算で十分
-    
-    # 月の調整値（新暦→旧暦の概算）
-    month_adjust = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334]
-    
-    # 年の基準日からの日数計算
-    base_year = 1900
-    days_from_base = 0
-    
-    # 年数による日数加算
-    for y in range(base_year, year):
-        if is_leap_year(y):
-            days_from_base += 366
-        else:
-            days_from_base += 365
-    
-    # 月による日数加算
-    if month > 1:
-        days_from_base += month_adjust[month - 1]
-        # うるう年で3月以降の場合は1日追加
-        if month > 2 and is_leap_year(year):
-            days_from_base += 1
-    
-    # 日数を加算
-    days_from_base += day
-    
-    # 六曜の基準調整（1900年1月1日の六曜に合わせる）
-    # 1900年1月1日は先勝（0）だったとして計算
-    rokuyou_offset = 0
-    
-    # 六曜計算
-    rokuyou_index = (days_from_base + rokuyou_offset) % 6
-    
-    return rokuyou_index
+    """Calculate the six-day label from the Japanese lunar month and day."""
+    from src.utils.lunisolar import lunar_date
+    lunar = lunar_date(target_date)
+    # 旧暦1月1日は先勝。閏月も直前と同じ月番号を使う。
+    return (lunar.month + lunar.day - 2) % 6
 
 def is_leap_year(year: int) -> bool:
     """うるう年判定"""

@@ -6,21 +6,22 @@
 
 ## 概要
 
-PiCalendarは、Raspberry Pi Zero 2 W向けに設計された常時表示型の情報端末アプリケーションです。デジタル時計、カレンダー、天気予報、2Dキャラクターアニメーションを美しく表示します。
+2026-09-18: 手描きイラストの **Field Notes** デザインを追加し、月齢・月の図形・六曜の計算を修正しました。
+[更新・復旧手順](docs/guides/UPDATE_GUIDE.md)と[検証記録](docs/redesign-validation-2026-09-18.md)を参照してください。
 
-![PiCalendar Demo](docs/images/demo.png)
+PiCalendarは、Raspberry Pi Zero 2 W向けの常時表示アプリです。時計、カレンダー、六曜、月齢、天気予報を、手描きイラストを添えた落ち着いた画面にまとめています。
+
+![PiCalendar Field Notes — Raspberry Piの実機画面](docs/images/demo.png)
 
 ### 主な機能
 
-- 🕐 **デジタル時計** - 大きく見やすいデジタル時計表示（影付き、固定位置描画でズレなし）
-- 📅 **カレンダー** - 当月のカレンダーを日曜始まりで表示（曜日色分け、日本の祝日対応、六曜表示）
-- 🌙 **月齢表示** - 現在の月齢と月相名を表示（グラフィカル表示対応）
-- 🌤️ **天気予報** - 3日分の天気予報を画像アイコンで表示（Open-Meteo対応、オフラインキャッシュ機能）
-- 🎨 **テーマシステム** - 5種類のプリセットテーマ（default/compact/night/colorful/minimal）
-- 🖼️ **背景画像** - 壁紙の自動ローテーション表示（5分間隔で切替可能）
-- 🚀 **X Window対応** - KMSDRM/X11両対応、デスクトップ環境でも動作
-- ⚡ **軽量動作** - Raspberry Pi Zero 2 Wで快適に動作（CPU使用率30%以下）
-- 🔄 **自動起動** - systemdサービスによる自動起動、仮想環境対応
+- **Field Notesデザイン** - 紙色・深い緑・手描きの森とキツネ、同梱フォントによる統一した表示
+- **時計・カレンダー** - 秒表示、日本の祝日、旧暦に基づく六曜。日曜始まり・月曜始まりに対応
+- **月齢・月相** - 実際の新月から月齢を算出し、照明率に合った月の形をオフラインで描画
+- **天気予報** - Open-Meteoの3日予報。通信失敗時は取得済みデータを保持し、欠測値や古い日付を区別
+- **軽量描画** - 画像・カレンダー等をキャッシュ。Pi Zero 2 Wでの短時間計測結果は[検証記録](docs/redesign-validation-2026-09-18.md)を参照
+- **自動起動** - systemdサービスとPython仮想環境に対応
+- **旧デザイン** - `ui.style: classic` で従来のレイアウトを使用可能。以下の既存テーマ・壁紙の説明は主に旧デザイン向け
 
 ## 動作環境
 
@@ -76,9 +77,6 @@ pip install -r requirements.txt
 ```bash
 # Raspberry Pi OS (Bookworm以降)の場合
 pip3 install -r requirements.txt --break-system-packages
-
-# または、aptで個別にインストール
-sudo apt install -y python3-pygame python3-yaml python3-requests python3-pillow
 ```
 
 ### 4. 設定
@@ -92,9 +90,10 @@ nano settings.yaml
 ```
 
 主な設定項目：
+- `ui.style` - 新デザインの `field_notes`（既定）または旧デザインの `classic`
+- `calendar.show_rokuyou_names` - 六曜表示の有効/無効
 - `weather.location` - 天気情報を取得する地点の座標
 - `screen.fullscreen` - フルスクリーン表示の有効/無効
-- `character.enabled` - キャラクター表示の有効/無効
 
 ### 5. 自動起動の設定
 
@@ -164,6 +163,7 @@ screen:
 
 # UI設定
 ui:
+  style: field_notes
   margins: { x: 24, y: 16 }
   clock_font_px: 130
   date_font_px: 36

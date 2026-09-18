@@ -1,219 +1,121 @@
-#!/usr/bin/env python3
+"""Offline lunar ephemeris. Dates mean noon JST; aware datetimes mean an instant.
+
+Moon age is elapsed UT days since the actual conjunction, not a fixed-period
+remainder. Phase and illumination are independent astronomical quantities.
 """
-月齢・月相計算モジュール
+from datetime import date, datetime, time, timedelta, timezone
+from functools import lru_cache
+from zoneinfo import ZoneInfo
+import astronomy
 
-月の満ち欠けを計算し、現在の月相を判定します。
-"""
-
-from datetime import date, datetime, timedelta
-from typing import Dict, Tuple
-import math
-
-# 月相の定義
+JST = ZoneInfo("Asia/Tokyo")
+UTC = timezone.utc
 MOON_PHASES = {
-    "new": "新月",
-    "waxing_crescent": "三日月",
-    "first_quarter": "上弦",
-    "waxing_gibbous": "十三夜",
-    "full": "満月",
-    "waning_gibbous": "寝待月",
-    "last_quarter": "下弦",
-    "waning_crescent": "有明月"
+    "new": "New moon", "waxing_crescent": "Waxing crescent",
+    "first_quarter": "First quarter", "waxing_gibbous": "Waxing gibbous",
+    "full": "Full moon", "waning_gibbous": "Waning gibbous",
+    "last_quarter": "Last quarter", "waning_crescent": "Waning crescent",
 }
+MOON_ASCII = dict(zip(MOON_PHASES, (".", ")", "D", "O>", "O", "<O", "C", "(")))
 
-# 月相の絵文字（Unicode）
-MOON_EMOJIS = {
-    "new": "🌑",
-    "waxing_crescent": "🌒",
-    "first_quarter": "🌓",
-    "waxing_gibbous": "🌔",
-    "full": "🌕",
-    "waning_gibbous": "🌖",
-    "last_quarter": "🌗",
-    "waning_crescent": "🌘"
-}
 
-# 月相のASCIIアート（小サイズ）
-MOON_ASCII = {
-    "new": "●",
-    "waxing_crescent": ")",
-    "first_quarter": "D",
-    "waxing_gibbous": "⊃",
-    "full": "○",
-    "waning_gibbous": "⊂",
-    "last_quarter": "C",
-    "waning_crescent": "("
-}
+def as_utc(value: date | datetime) -> datetime:
+    """Interpret a naive datetime as JST, never implicitly as machine time."""
+    if isinstance(value, datetime):
+        return (value.replace(tzinfo=JST) if value.tzinfo is None else value).astimezone(UTC)
+    if isinstance(value, date):
+        return datetime.combine(value, time(12), JST).astimezone(UTC)
+    raise TypeError("Expected a date or datetime")
 
-def calculate_moon_age(target_date: date) -> float:
-    """
-    指定された日付の月齢を計算
-    
-    月齢は新月を0として、満月が約14.75日となる周期で計算されます。
-    1朔望月（新月から次の新月まで）は約29.53日です。
-    
-    Args:
-        target_date: 計算対象の日付
-        
-    Returns:
-        float: 月齢（0.0〜29.53）
-    """
-    # 基準日（既知の新月日）: 2000年1月6日 18:14 UTC
-    known_new_moon = datetime(2000, 1, 6, 18, 14)
-    
-    # 対象日のdatetimeオブジェクトを作成（正午で計算）
-    if isinstance(target_date, date) and not isinstance(target_date, datetime):
-        target_datetime = datetime.combine(target_date, datetime.min.time())
-        target_datetime = target_datetime.replace(hour=12)  # 正午
-    else:
-        target_datetime = target_date
-    
-    # 基準日からの経過日数
-    days_elapsed = (target_datetime - known_new_moon).total_seconds() / 86400
-    
-    # 朔望月の周期（日数）
-    lunation_period = 29.530588853
-    
-    # 月齢を計算（0〜29.53の範囲）
-    moon_age = days_elapsed % lunation_period
-    
-    return moon_age
 
-def get_moon_phase(target_date: date) -> str:
-    """
-    指定された日付の月相を取得
-    
-    Args:
-        target_date: 対象日付
-        
-    Returns:
-        str: 月相のキー（new, waxing_crescent, etc.）
-    """
-    moon_age = calculate_moon_age(target_date)
-    
-    # 月齢から月相を判定
-    # 各月相の範囲（概算）
-    if moon_age < 1.84:
-        return "new"
-    elif moon_age < 5.53:
-        return "waxing_crescent"
-    elif moon_age < 9.22:
-        return "first_quarter"
-    elif moon_age < 12.91:
-        return "waxing_gibbous"
-    elif moon_age < 16.61:
-        return "full"
-    elif moon_age < 20.30:
-        return "waning_gibbous"
-    elif moon_age < 23.99:
-        return "last_quarter"
-    elif moon_age < 27.68:
-        return "waning_crescent"
-    else:
-        return "new"
+def astronomy_time(value: datetime) -> astronomy.Time:
+    value = as_utc(value)
+    return astronomy.Time.Make(value.year, value.month, value.day, value.hour,
+                               value.minute, value.second + value.microsecond / 1e6)
 
-def get_moon_info(target_date: date) -> Dict[str, any]:
-    """
-    指定された日付の月の詳細情報を取得
-    
-    Args:
-        target_date: 対象日付
-        
-    Returns:
-        dict: 月の詳細情報
-    """
-    moon_age = calculate_moon_age(target_date)
-    moon_phase = get_moon_phase(target_date)
-    
-    # 照明率を計算（簡易版）
-    illumination = (1 - math.cos(2 * math.pi * moon_age / 29.530588853)) / 2
-    
+
+def utc_datetime(value: astronomy.Time) -> datetime:
+    # Astronomy Engine returns a naive datetime whose documented scale is UTC.
+    return value.Utc().replace(tzinfo=UTC)
+
+
+@lru_cache(maxsize=64)
+def _lunation_at_midnight(day: date) -> tuple[astronomy.Time, astronomy.Time]:
+    start = astronomy_time(datetime.combine(day, time(), UTC))
+    previous = astronomy.SearchMoonPhase(0, start, -32)
+    if previous is None:
+        raise ValueError("Previous new moon not found")
+    following = astronomy.SearchMoonPhase(0, previous.AddDays(1), 32)
+    if following is None:
+        raise ValueError("Next new moon not found")
+    return previous, following
+
+
+def _lunation(instant: datetime) -> tuple[astronomy.Time, astronomy.Time]:
+    previous, following = _lunation_at_midnight(instant.date())
+    if instant >= utc_datetime(following):
+        previous = following
+        following = astronomy.SearchMoonPhase(0, previous.AddDays(1), 32)
+        if following is None:
+            raise ValueError("Next new moon not found")
+    return previous, following
+
+
+def calculate_moon_age(target_date: date | datetime) -> float:
+    instant = as_utc(target_date)
+    previous, _ = _lunation(instant)
+    return (instant - utc_datetime(previous)).total_seconds() / 86400
+
+
+def get_moon_info(target_date: date | datetime) -> dict:
+    instant = as_utc(target_date)
+    t = astronomy_time(instant)
+    previous, following = _lunation(instant)
+    age = (instant - utc_datetime(previous)).total_seconds() / 86400
+    longitude = astronomy.MoonPhase(t)
+    fraction = astronomy.Illumination(astronomy.Body.Moon, t).phase_fraction
+    # Eight conventional sectors, not the exact instant of a quarter event.
+    phase = tuple(MOON_PHASES)[int((longitude + 22.5) // 45) % 8]
     return {
-        "age": round(moon_age, 1),
-        "phase": moon_phase,
-        "phase_name": MOON_PHASES[moon_phase],
-        "emoji": MOON_EMOJIS[moon_phase],
-        "ascii": MOON_ASCII[moon_phase],
-        "illumination": round(illumination * 100, 1)
+        "age": round(age, 1), "age_days": age,
+        "phase": phase, "phase_name": MOON_PHASES[phase],
+        "ascii": MOON_ASCII[phase],
+        "emoji": MOON_ASCII[phase],  # Compatibility alias; no emoji font needed.
+        "illumination": round(fraction * 100, 1),
+        "illumination_fraction": fraction,
+        "phase_angle": longitude, "waxing": longitude < 180,
+        "previous_new_moon": utc_datetime(previous),
+        "next_new_moon": utc_datetime(following),
     }
 
-def get_moon_display(target_date: date, format_type: str = "emoji") -> str:
-    """
-    表示用の月相文字列を取得
-    
-    Args:
-        target_date: 対象日付
-        format_type: 表示形式（"emoji", "text", "ascii", "full"）
-        
-    Returns:
-        str: 表示用文字列
-    """
+
+def get_moon_phase(target_date: date | datetime) -> str:
+    return get_moon_info(target_date)["phase"]
+
+
+def get_moon_display(target_date: date | datetime, format_type: str = "text") -> str:
     info = get_moon_info(target_date)
-    
-    if format_type == "emoji":
-        return info["emoji"]
-    elif format_type == "text":
-        return info["phase_name"]
-    elif format_type == "ascii":
+    if format_type in ("ascii", "emoji"):
         return info["ascii"]
-    elif format_type == "full":
-        return f"{info['emoji']} {info['phase_name']} (月齢{info['age']})"
-    else:
-        return info["emoji"]
+    if format_type == "full":
+        return f"{info['phase_name']} / age {info['age']:.1f} days"
+    return info["phase_name"]
 
-def get_next_moon_phases(start_date: date, days: int = 30) -> list:
-    """
-    今後の主要な月相の日付を取得
-    
-    Args:
-        start_date: 開始日
-        days: 検索する日数
-        
-    Returns:
-        list: 月相変化の日付リスト
-    """
-    phases = []
-    current_phase = get_moon_phase(start_date)
-    
-    for i in range(1, days + 1):
-        check_date = start_date + timedelta(days=i)
-        new_phase = get_moon_phase(check_date)
-        
-        if new_phase != current_phase:
-            phases.append({
-                "date": check_date,
-                "phase": new_phase,
-                "name": MOON_PHASES[new_phase]
-            })
-            current_phase = new_phase
-    
-    return phases
 
-if __name__ == "__main__":
-    # テスト実行
-    from datetime import datetime
-    
-    today = date.today()
-    
-    print(f"今日（{today}）の月情報:")
-    info = get_moon_info(today)
-    print(f"  月齢: {info['age']}日")
-    print(f"  月相: {info['phase_name']}")
-    print(f"  絵文字: {info['emoji']}")
-    print(f"  ASCII: {info['ascii']}")
-    print(f"  照明率: {info['illumination']}%")
-    print()
-    
-    print("今月の月相:")
-    for day in range(1, 32):
-        try:
-            check_date = date(today.year, today.month, day)
-            display = get_moon_display(check_date, "full")
-            print(f"  {day:2d}日: {display}")
-        except ValueError:
-            break
-    
-    print("\n今後30日間の月相変化:")
-    next_phases = get_next_moon_phases(today, 30)
-    for phase_info in next_phases[:5]:  # 最初の5件のみ表示
-        print(f"  {phase_info['date']}: {phase_info['name']}")
+def get_next_moon_phases(start_date: date | datetime, days: int = 30) -> list[dict]:
+    """Actual new/quarter/full events, including time, within [start, end)."""
+    if days < 0:
+        raise ValueError("days must be nonnegative")
+    instant = (datetime.combine(start_date, time(), JST).astimezone(UTC)
+               if not isinstance(start_date, datetime) else as_utc(start_date))
+    end = instant + timedelta(days=days)
+    quarter = astronomy.SearchMoonQuarter(astronomy_time(instant))
+    result = []
+    phases = ("new", "first_quarter", "full", "last_quarter")
+    while utc_datetime(quarter.time) < end:
+        event_time = utc_datetime(quarter.time)
+        phase = phases[quarter.quarter]
+        result.append({"date": event_time.astimezone(JST).date(),
+                       "time": event_time, "phase": phase, "name": MOON_PHASES[phase]})
+        quarter = astronomy.NextMoonQuarter(quarter)
+    return result

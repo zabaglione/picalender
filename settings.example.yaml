@@ -42,6 +42,7 @@ layout:
 
 # UI設定
 ui:
+  style: field_notes # field_notes or classic
   margins:
     x: 24                  # 左右マージン
     y: 16                  # 上下マージン

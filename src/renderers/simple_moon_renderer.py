@@ -166,7 +166,7 @@ class SimpleMoonRenderer:
             today = now.date()
             
             # 月相情報を取得
-            moon_info = get_moon_info(today)
+            moon_info = get_moon_info(now.astimezone())
             
             # 表示形式に応じて描画
             if self.moon_phase_format == "emoji":
@@ -257,118 +257,9 @@ class SimpleMoonRenderer:
             logger.error(f"Failed to render moon phase: {e}")
     
     def _create_moon_surface(self, moon_info: Dict) -> pygame.Surface:
-        """
-        月のサーフェースを作成（キャッシュ用）
-        
-        Args:
-            moon_info: 月情報
-            
-        Returns:
-            月のサーフェース
-        """
-        import math
-        
-        radius = 30  # 月の半径
-        moon_age = moon_info["age"]
-        
-        # 月の色
-        moon_color = (255, 255, 200)  # 薄い黄色
-        shadow_color = (40, 40, 50)   # 暗い影の色
-        
-        # 作業用サーフェースを作成（透明背景）
-        surface_size = radius * 2 + 4
-        moon_surface = pygame.Surface((surface_size, surface_size), pygame.SRCALPHA)
-        center_x = surface_size // 2
-        center_y = surface_size // 2
-        
-        # 月齢を0-1の範囲に正規化
-        phase = moon_age / 29.53
-        
-        # ピクセル単位で月を描画
-        for py in range(-radius, radius + 1):
-            for px in range(-radius, radius + 1):
-                # 円の内側かチェック
-                distance_sq = px * px + py * py
-                if distance_sq <= radius * radius:
-                    # 画面座標
-                    screen_x = center_x + px
-                    screen_y = center_y + py
-                    
-                    # 月の位相に基づいて明暗を決定
-                    # x座標を-1から1に正規化
-                    norm_x = px / radius
-                    
-                    # 各ピクセルが明るいか暗いかを決定
-                    is_bright = False
-                    
-                    if phase < 0.03 or phase > 0.97:  # 新月
-                        is_bright = False
-                    elif phase < 0.5:  # 新月から満月へ
-                        # 右側が徐々に明るくなる
-                        illumination = phase * 2  # 0から1へ
-                        
-                        if illumination < 0.5:
-                            # 三日月形状（右側だけ明るい）
-                            # 楕円の境界を計算
-                            terminator_x = 1 - illumination * 2  # 1から0へ
-                            # y座標での楕円の幅
-                            y_factor = math.sqrt(1 - (py / radius) ** 2) if abs(py) <= radius else 0
-                            boundary = -1 + (1 - terminator_x) * (1 + y_factor)
-                            is_bright = norm_x > boundary
-                        else:
-                            # 上弦から満月へ（左側の影が減る）
-                            shadow_amount = 1 - illumination  # 0.5から0へ
-                            # y座標での楕円の幅
-                            y_factor = math.sqrt(1 - (py / radius) ** 2) if abs(py) <= radius else 0
-                            boundary = -1 + shadow_amount * 2 * y_factor
-                            is_bright = norm_x > boundary
-                    
-                    elif phase < 0.53:  # 満月
-                        is_bright = True
-                    
-                    else:  # 満月から新月へ
-                        waning = (phase - 0.5) * 2  # 0から1へ
-                        
-                        if waning < 0.5:
-                            # 満月直後から下弦（左側に影が増える）
-                            shadow_amount = waning * 2  # 0から1へ
-                            # y座標での楕円の幅
-                            y_factor = math.sqrt(1 - (py / radius) ** 2) if abs(py) <= radius else 0
-                            boundary = -1 + shadow_amount * 2 * y_factor
-                            is_bright = norm_x > boundary
-                        else:
-                            # 下弦から新月（右側だけ明るい三日月）
-                            illumination = 2 - waning * 2  # 1から0へ
-                            # y座標での楕円の幅
-                            y_factor = math.sqrt(1 - (py / radius) ** 2) if abs(py) <= radius else 0
-                            boundary = 1 - illumination * (1 + y_factor)
-                            is_bright = norm_x > boundary
-                    
-                    # ピクセルの色を設定
-                    if is_bright:
-                        # 縁に近いほど少し暗くする（リアリズム向上）
-                        edge_factor = 1.0 - (distance_sq / (radius * radius)) * 0.2
-                        color = (
-                            int(moon_color[0] * edge_factor),
-                            int(moon_color[1] * edge_factor),
-                            int(moon_color[2] * edge_factor)
-                        )
-                        moon_surface.set_at((screen_x, screen_y), color + (255,))
-                    else:
-                        moon_surface.set_at((screen_x, screen_y), shadow_color + (255,))
-        
-        # 輪郭線を描画
-        pygame.draw.circle(moon_surface, (200, 200, 180), (center_x, center_y), radius, 1)
-        
-        # 満月の場合はハイライトを追加
-        if 0.47 < phase < 0.53:
-            pygame.draw.circle(moon_surface, (255, 255, 220), 
-                             (center_x - radius // 3, center_y - radius // 3), 
-                             radius // 5)
-        
-        # 完成した月のサーフェースを返す
-        return moon_surface
-    
+        from src.renderers.moon_disk import moon_surface
+        return moon_surface(moon_info, 64)
+
     def should_update(self) -> bool:
         """
         更新が必要か確認

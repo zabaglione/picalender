@@ -84,7 +84,8 @@ class PiCalendarApp:
         # ログ設定
         logging.basicConfig(
             level=logging.INFO,
-            format='%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+            format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+            force=True
         )
         self.logger = logging.getLogger(__name__)
         
@@ -109,6 +110,7 @@ class PiCalendarApp:
         self.renderers = []
         self.fullscreen = False
         self.environment_type = environment_type
+        self.capture_requested = False
     
     def _load_settings(self):
         """設定ファイルを読み込み"""
@@ -121,6 +123,7 @@ class PiCalendarApp:
                 'fullscreen': True
             },
             'ui': {
+                'style': 'field_notes',
                 'clock_font_px': 130,
                 'date_font_px': 36,
                 'calendar_font_px': 22,
@@ -223,6 +226,12 @@ class PiCalendarApp:
             
             # レンダラー初期化
             self.logger.info("Initializing renderers...")
+
+            if self.settings.get('ui', {}).get('style', 'field_notes') == 'field_notes':
+                from src.renderers.field_notes_renderer import FieldNotesRenderer
+                self.renderers.append(('field_notes', FieldNotesRenderer(self.settings)))
+                self.logger.info("Field Notes dashboard initialized")
+                return True
             
             # 壁紙レンダラー（最初に初期化）
             try:
@@ -444,6 +453,13 @@ class PiCalendarApp:
                 # 画面更新（必要な時のみ）
                 if need_update:
                     pygame.display.flip()
+
+                if self.capture_requested:
+                    self.capture_requested = False
+                    capture = Path(__file__).parent / 'logs' / 'display.png'
+                    capture.parent.mkdir(parents=True, exist_ok=True)
+                    pygame.image.save(self.screen, str(capture))
+                    self.logger.info("Display captured: %s", capture)
                 
                 # FPS制御
                 self.clock.tick(base_fps)
@@ -482,6 +498,9 @@ class PiCalendarApp:
         self.logger.info(f"Received signal {signum}")
         self.running = False
 
+    def capture_handler(self, signum, frame):
+        self.capture_requested = True
+
 
 def main():
     """メイン関数"""
@@ -491,6 +510,7 @@ def main():
     # シグナルハンドラー設定
     signal.signal(signal.SIGTERM, app.signal_handler)
     signal.signal(signal.SIGINT, app.signal_handler)
+    signal.signal(signal.SIGUSR1, app.capture_handler)
     
     # 初期化
     if not app.initialize():
