@@ -1,9 +1,11 @@
 """Handcrafted calendar dashboard, composed at 1024x600 and cached by minute."""
 import calendar
 from datetime import datetime, timedelta
+import logging
 import math
 from pathlib import Path
 import random
+import time
 from zoneinfo import ZoneInfo
 
 import holidays
@@ -24,6 +26,7 @@ SAGE = (113, 139, 129)
 GOLD = (192, 141, 77)
 MONTHS = tuple(calendar.month_name)
 WEEKDAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+LOGGER = logging.getLogger(__name__)
 
 
 class FieldNotesRenderer:
@@ -42,6 +45,9 @@ class FieldNotesRenderer:
         self._calendar_surface = None
         self._holiday_year = None
         self._holidays = {}
+        self._artwork_signature = None
+        self._artwork_next_check = 0.0
+        self._artwork_revision = 0
         self._static = self._make_static()
 
     def font(self, size, family="sans"):
@@ -93,6 +99,33 @@ class FieldNotesRenderer:
         self.text(surface, "LOCAL TIME", (350, 578), 9, MUTED)
         self.text(surface, "THREE-DAY FORECAST", (474, 437), 11, MUTED)
         return surface
+
+    def _refresh_artwork(self):
+        if not self.settings.get("daily_art", {}).get("enabled", False):
+            return
+        stamp = time.monotonic()
+        if stamp < self._artwork_next_check:
+            return
+        self._artwork_next_check = stamp + 5
+        path = self.root / "cache/daily_art/current.png"
+        try:
+            stat = path.stat()
+            signature = (stat.st_mtime_ns, stat.st_size)
+            if signature == self._artwork_signature:
+                return
+            self._artwork_signature = signature
+            # The sync job validates and atomically replaces a small 800x450 PNG.
+            if stat.st_size > 20 * 1024 * 1024:
+                raise ValueError("Artwork cache is too large")
+            artwork = pygame.image.load(str(path)).convert()
+            artwork = pygame.transform.smoothscale(artwork, (400, 225))
+            self._static.blit(artwork, (28, 337))
+            self._artwork_revision += 1
+            LOGGER.info("Daily artwork reloaded")
+        except FileNotFoundError:
+            pass
+        except (OSError, ValueError, pygame.error) as exc:
+            LOGGER.warning("Artwork reload failed; keeping the previous image: %s", exc)
 
     def _calendar(self, now):
         config = self.settings.get("calendar", {})
@@ -248,8 +281,9 @@ class FieldNotesRenderer:
             now = now.replace(tzinfo=self.timezone)
         else:
             now = now.astimezone(self.timezone)
+        self._refresh_artwork()
         snapshot = self.weather.snapshot()
-        key = (now.year, now.month, now.day, now.hour, now.minute, snapshot.revision)
+        key = (now.year, now.month, now.day, now.hour, now.minute, snapshot.revision, self._artwork_revision)
         if key != self._base_key:
             self._base = self._static.copy()
             self._base.blit(self._calendar(now), (0, 0))

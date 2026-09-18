@@ -1,0 +1,11 @@
+[Unit]
+Description=Check daily PiCalendar artwork for %i
+
+[Timer]
+OnBootSec=2min
+OnCalendar=*-*-* *:00,15,30,45:00
+Persistent=true
+Unit=picalender-artwork@%i.service
+
+[Install]
+WantedBy=timers.target

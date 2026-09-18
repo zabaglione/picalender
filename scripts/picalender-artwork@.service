@@ -1,0 +1,12 @@
+[Unit]
+Description=Fetch daily PiCalendar artwork for %i
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=%i
+WorkingDirectory=/home/%i/picalender
+ExecStart=/home/%i/picalender/venv/bin/python /home/%i/picalender/scripts/sync_daily_art.py
+TimeoutStartSec=1100
+Nice=10

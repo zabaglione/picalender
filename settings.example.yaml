@@ -92,6 +92,15 @@ weather:
     lat: 35.681236         # 緯度
     lon: 139.767125        # 経度
 
+# 日替わりイラスト（Field Notes / SSH先は非公開のsettings.yamlで指定）
+daily_art:
+  enabled: false
+  refresh_hour: 5          # ローカル時刻。失敗時は前の画像を保持
+  ssh_host: "user@art-server.local"
+  remote_script: "picalender-artwork/serve_daily_art.py"
+  # identity_file: "~/.ssh/id_ed25519"
+  themes: {}              # 例: {"2026-12-25": "A quiet winter celebration"}
+
 # キャラクター設定（オプション）
 character:
   enabled: false           # キャラクター表示（true で有効化）
