@@ -9,6 +9,7 @@ from src.utils.moon_phase import (JST, calculate_moon_age, get_moon_info,
                                   get_next_moon_phases)
 from src.utils.lunisolar import lunar_date, LunarDate
 from src.utils.rokuyou import calculate_rokuyou
+from src.utils.sky_events import clock_time, rise_set_times
 from src.renderers.moon_disk import is_illuminated
 
 REFERENCE = json.loads((Path(__file__).parent / "fixtures/naoj_moon_phases_2026.json").read_text())
@@ -55,6 +56,45 @@ def test_current_date_and_real_time_progression():
     assert info["age"] == 7.3
     assert 0.45 < info["illumination_fraction"] < 0.49
     assert calculate_moon_age(now + timedelta(hours=6)) - info["age_days"] == pytest.approx(0.25)
+
+
+@pytest.mark.parametrize("day, phase, english, japanese", [
+    (25, "waxing_gibbous", "Waxing gibbous", "満ちていく月"),
+    (26, "waxing_gibbous", "Waxing gibbous", "満ちていく月"),
+    (27, "full", "Full moon", "満月"),
+    (28, "waning_gibbous", "Waning gibbous", "欠けていく月"),
+])
+def test_full_moon_label_follows_jst_event_date(day, phase, english, japanese):
+    info = get_moon_info(datetime(2026, 9, day, 12, tzinfo=JST))
+    assert (info["phase"], info["phase_name"], info["phase_name_ja"]) == (
+        phase, english, japanese)
+
+
+def test_full_moon_date_label_on_both_sides_of_event():
+    event = next(event for event in EVENTS if event["phase"] == "full"
+                 and event["date"] == date(2026, 9, 27))["time"]
+    assert get_moon_info(event - timedelta(hours=1))["phase"] == "full"
+    assert get_moon_info(event + timedelta(hours=1))["phase"] == "full"
+    assert get_moon_info(event - timedelta(hours=3))["phase"] == "waxing_gibbous"
+
+
+def test_tokyo_rise_set_times_against_naoj_daily_calendar():
+    # https://eco.mtk.nao.ac.jp/cgi-bin/koyomi/sunmoon.cgi/25
+    # Published for Tokyo on 2026-09-25; the configured point is Tokyo Station.
+    sky = rise_set_times(date(2026, 9, 25), 35.681236, 139.767125)
+    for value, published in zip((sky.sunrise, sky.sunset, sky.moonrise, sky.moonset),
+                                ("05:31", "17:34", "16:43", "03:40")):
+        assert value is not None and value.date() == date(2026, 9, 25)
+        hour, minute = map(int, published.split(":"))
+        expected = value.replace(hour=hour, minute=minute, second=0, microsecond=0)
+        assert abs((value - expected).total_seconds()) < 180
+    assert clock_time(sky.sunrise) == "05:31"
+
+
+def test_polar_day_does_not_invent_rise_or_set_times():
+    sky = rise_set_times(date(2026, 6, 21), 69.6492, 18.9553, "Europe/Oslo")
+    assert sky.sunrise is None and sky.sunset is None
+    assert clock_time(sky.sunrise) == "--:--"
 
 
 @pytest.mark.parametrize("fraction", [0, 0.1, 0.25, 0.5, 0.75, 0.9, 1])

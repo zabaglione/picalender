@@ -16,7 +16,14 @@ MOON_PHASES = {
     "full": "Full moon", "waning_gibbous": "Waning gibbous",
     "last_quarter": "Last quarter", "waning_crescent": "Waning crescent",
 }
+MOON_PHASES_JA = {
+    "new": "新月", "waxing_crescent": "満ちていく細い月",
+    "first_quarter": "上弦の月", "waxing_gibbous": "満ちていく月",
+    "full": "満月", "waning_gibbous": "欠けていく月",
+    "last_quarter": "下弦の月", "waning_crescent": "欠けていく細い月",
+}
 MOON_ASCII = dict(zip(MOON_PHASES, (".", ")", "D", "O>", "O", "<O", "C", "(")))
+QUARTER_PHASES = ("new", "first_quarter", "full", "last_quarter")
 
 
 def as_utc(value: date | datetime) -> datetime:
@@ -67,6 +74,16 @@ def calculate_moon_age(target_date: date | datetime) -> float:
     return (instant - utc_datetime(previous)).total_seconds() / 86400
 
 
+def _calendar_phase(instant: datetime, longitude: float) -> str:
+    """Name primary phases on their JST event date; name other days by geometry."""
+    start = astronomy_time(instant - timedelta(days=1))
+    event = astronomy.SearchMoonQuarter(start)
+    if utc_datetime(event.time).astimezone(JST).date() == instant.astimezone(JST).date():
+        return QUARTER_PHASES[event.quarter]
+    return ("waxing_crescent", "waxing_gibbous", "waning_gibbous",
+            "waning_crescent")[int(longitude // 90) % 4]
+
+
 def get_moon_info(target_date: date | datetime) -> dict:
     instant = as_utc(target_date)
     t = astronomy_time(instant)
@@ -74,11 +91,12 @@ def get_moon_info(target_date: date | datetime) -> dict:
     age = (instant - utc_datetime(previous)).total_seconds() / 86400
     longitude = astronomy.MoonPhase(t)
     fraction = astronomy.Illumination(astronomy.Body.Moon, t).phase_fraction
-    # Eight conventional sectors, not the exact instant of a quarter event.
-    phase = tuple(MOON_PHASES)[int((longitude + 22.5) // 45) % 8]
+    # Primary names refer to the local calendar date of the actual event.
+    phase = _calendar_phase(instant, longitude)
     return {
         "age": round(age, 1), "age_days": age,
         "phase": phase, "phase_name": MOON_PHASES[phase],
+        "phase_name_ja": MOON_PHASES_JA[phase],
         "ascii": MOON_ASCII[phase],
         "emoji": MOON_ASCII[phase],  # Compatibility alias; no emoji font needed.
         "illumination": round(fraction * 100, 1),

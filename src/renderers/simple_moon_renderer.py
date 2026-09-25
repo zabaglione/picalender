@@ -184,7 +184,7 @@ class SimpleMoonRenderer:
                 
             elif self.moon_phase_format == "text":
                 # テキスト形式
-                moon_text = moon_info["phase_name"]
+                moon_text = f"{moon_info['phase_name']} / {moon_info['phase_name_ja']}"
                 text_surface = self.small_font.render(moon_text, True, (255, 255, 200))
                 text_rect = text_surface.get_rect(center=(self.x, self.y))
                 screen.blit(text_surface, text_rect)
@@ -225,8 +225,8 @@ class SimpleMoonRenderer:
                 screen.blit(age_surface, age_rect)
                 
                 # 月相名も表示
-                phase_text = moon_info["phase_name"]
-                logger.debug(f"Moon renderer: Drawing phase text '{phase_text}' at ({self.x}, {self.y + 72})")
+                phase_text = f"{moon_info['phase_name']} / {moon_info['phase_name_ja']}"
+                logger.debug(f"Moon renderer: Drawing phase {moon_info['phase']} at ({self.x}, {self.y + 72})")
                 phase_surface = self.small_font.render(phase_text, True, (255, 255, 200))
                 phase_rect = phase_surface.get_rect(center=(self.x, self.y + 72))
                 
@@ -249,7 +249,8 @@ class SimpleMoonRenderer:
                 screen.blit(text_surface, text_rect)
                 
                 # 月相名を小さく表示
-                phase_surface = self.small_font.render(moon_info["phase_name"], True, (200, 200, 200))
+                phase_text = f"{moon_info['phase_name']} / {moon_info['phase_name_ja']}"
+                phase_surface = self.small_font.render(phase_text, True, (200, 200, 200))
                 phase_rect = phase_surface.get_rect(center=(self.x, self.y + 35))
                 screen.blit(phase_surface, phase_rect)
             

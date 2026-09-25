@@ -10,10 +10,12 @@ from zoneinfo import ZoneInfo
 
 import holidays
 import pygame
+import astronomy
 
 from src.renderers.moon_disk import moon_surface
-from src.utils.moon_phase import get_moon_info
+from src.utils.moon_phase import MOON_PHASES_JA, get_moon_info, get_next_moon_phases
 from src.utils.rokuyou import get_rokuyou_name
+from src.utils.sky_events import SkyTimes, clock_time, rise_set_times
 from src.weather.dashboard_weather import DashboardWeather, WeatherSnapshot
 
 PAPER = (237, 232, 216)
@@ -37,6 +39,9 @@ class FieldNotesRenderer:
         self.root = Path(__file__).resolve().parents[2]
         self.assets = self.root / "assets" / "field_notes"
         self.timezone = ZoneInfo(self.settings.get("weather", {}).get("timezone", "Asia/Tokyo"))
+        location = self.settings.get("weather", {}).get("location", {})
+        self.latitude = location.get("lat", 35.681236)
+        self.longitude = location.get("lon", 139.767125)
         self.weather = weather or DashboardWeather(self.settings, self.root, start_worker)
         self.fonts = {}
         self._base_key = None
@@ -45,6 +50,10 @@ class FieldNotesRenderer:
         self._calendar_surface = None
         self._holiday_year = None
         self._holidays = {}
+        self._sky_day = None
+        self._sky_times = SkyTimes(None, None, None, None)
+        self._next_moon_event = None
+        self._moon_last_now = None
         self._artwork_signature = None
         self._artwork_next_check = 0.0
         self._artwork_revision = 0
@@ -90,15 +99,22 @@ class FieldNotesRenderer:
         artwork = pygame.image.load(str(self.assets / "forest-fox.png")).convert()
         artwork = pygame.transform.smoothscale(artwork, (400, 225))
         surface.blit(artwork, (28, 337))
-        pygame.draw.line(surface, LINE, (28, 562), (428, 562), 1)
-        self.text(surface, "FIELD NOTES", (30, 25), 14, MUTED)
-        self.text(surface, "A SMALL WINDOW INTO TODAY", (30, 48), 10, MUTED)
-        self.text(surface, "THE MOON", (30, 202), 11, MUTED)
-        self.text(surface, "A MOMENT OF QUIET", (30, 318), 10, MUTED)
-        self.text(surface, "PiCalendar", (30, 575), 11, MUTED)
-        self.text(surface, "LOCAL TIME", (350, 578), 9, MUTED)
-        self.text(surface, "THREE-DAY FORECAST", (474, 437), 11, MUTED)
         return surface
+
+    def _sky(self, surface, now):
+        if self._sky_day != now.date():
+            self._sky_day = now.date()
+            try:
+                self._sky_times = rise_set_times(now.date(), self.latitude, self.longitude,
+                                                 self.timezone.key)
+            except (ValueError, astronomy.Error) as exc:
+                self._sky_times = SkyTimes(None, None, None, None)
+                LOGGER.warning("Rise/set calculation failed: %s", exc)
+        sky = self._sky_times
+        self.text(surface, f"日の出 {clock_time(sky.sunrise)}    日の入 {clock_time(sky.sunset)}",
+                  (30, 21), 16, MUTED, "jp")
+        self.text(surface, f"月の出 {clock_time(sky.moonrise)}    月の入 {clock_time(sky.moonset)}",
+                  (30, 47), 14, MUTED, "jp")
 
     def _refresh_artwork(self):
         if not self.settings.get("daily_art", {}).get("enabled", False):
@@ -131,7 +147,7 @@ class FieldNotesRenderer:
         config = self.settings.get("calendar", {})
         if self._holiday_year != now.year:
             self._holidays = (holidays.country_holidays(config.get("holidays_country", "JP"),
-                                                       years=[now.year], language="ja")
+                                                       years=[now.year, now.year + 1], language="ja")
                               if config.get("holidays_enabled", True) else {})
             self._holiday_year = now.year
         key = (now.year, now.month, now.day)
@@ -170,43 +186,54 @@ class FieldNotesRenderer:
                 if target in self._holidays and not selected:
                     pygame.draw.circle(result, RUST, (x + 21, y + 15), 2)
         pygame.draw.line(result, LINE, (476, 383), (975, 382), 1)
-        upcoming = sorted(day for day in self._holidays if now.date() <= day and day.month == now.month)
+        upcoming = sorted(day for day in self._holidays if now.date() <= day)
         if upcoming and config.get("show_holiday_names", True):
             day = upcoming[0]
-            self.text(result, f"{day.month:02}.{day.day:02}", (476, 390), 11, RUST)
-            self.text(result, self._holidays[day], (522, 386), 13, MUTED, "jp")
-        else:
-            self.text(result, "A DAY AT A TIME", (476, 390), 10, MUTED)
+            label = "今日の祝日" if day == now.date() else "次の祝日"
+            self.text(result, label, (476, 386), 13, RUST, "jp")
+            self.text(result, f"{day.month}/{day.day}", (554, 386), 14, RUST)
+            self.text(result, self._holidays[day], (610, 386), 14, MUTED, "jp")
         self._calendar_key, self._calendar_surface = key, result
         return result
 
     def _moon(self, surface, now):
         if not self.settings.get("calendar", {}).get("moon_phase_enabled", True):
-            self.text(surface, "Take a little time.", (105, 248), 20, PAPER, "serif")
             return
+        if (self._next_moon_event is None or
+                (self._moon_last_now is not None and now < self._moon_last_now) or
+                now >= self._next_moon_event["time"].astimezone(self.timezone)):
+            events = get_next_moon_phases(now, 12)
+            self._next_moon_event = events[0] if events else None
+        self._moon_last_now = now
+        if self._next_moon_event:
+            event = self._next_moon_event
+            local = event["time"].astimezone(self.timezone)
+            self.text(surface, f"次の{MOON_PHASES_JA[event['phase']]}  {local.month}/{local.day} {local:%H:%M}",
+                      (30, 201), 13, MUTED, "jp")
         info = get_moon_info(now)
         surface.blit(moon_surface(info, 64), (42, 233))
-        self.text(surface, info["phase_name"], (119, 234), 21, CARD, "serif")
+        self.text(surface, info["phase_name"], (119, 230), 19, CARD, "serif")
+        self.text(surface, info["phase_name_ja"], (120, 254), 15, CARD, "jp")
         self.text(surface, f"Age {info['age']:.1f} days  /  {info['illumination']:.0f}% lit",
-                  (120, 268), 14, (199, 207, 180))
+                  (120, 281), 13, (199, 207, 180))
 
     @staticmethod
-    def _condition(code):
+    def _weather_kind(code):
         if code in (0, 1):
-            return "Clear", "sun"
+            return "sun"
         if code == 2:
-            return "Partly cloudy", "partly"
+            return "partly"
         if code == 3:
-            return "Cloudy", "cloud"
+            return "cloud"
         if code in (45, 48):
-            return "Fog", "fog"
+            return "fog"
         if code in (71, 73, 75, 77, 85, 86):
-            return "Snow", "snow"
+            return "snow"
         if code in (95, 96, 99):
-            return "Thunder", "thunder"
+            return "thunder"
         if code in (51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82):
-            return "Rain", "rain"
-        return "Unavailable", "unknown"
+            return "rain"
+        return "unknown"
 
     @staticmethod
     def _weather_icon(surface, center, kind):
@@ -250,21 +277,23 @@ class FieldNotesRenderer:
                                   (now - snapshot.updated).total_seconds() > 7200)
         by_day = {forecast.date: forecast for forecast in snapshot.forecasts}
         if snapshot.updated is None:
-            status = "OFFLINE" if snapshot.error else "CONNECTING"
+            status = "予報取得不可" if snapshot.error else "予報取得中"
         elif now.date() not in by_day:
-            status = "NO FORECAST"
+            status = "今日の予報なし"
         else:
-            status = ("CACHED" if stale else "UPDATED") + " " + snapshot.updated.astimezone(self.timezone).strftime("%H:%M")
-        self.text(surface, status, (870, 438), 9, MUTED)
+            prefix = "予報更新遅延" if stale else "予報更新"
+            updated = snapshot.updated.astimezone(self.timezone)
+            status = f"{prefix} {updated.month}/{updated.day} {updated:%H:%M}"
+        self.text(surface, status, (474, 435), 11, MUTED, "jp")
         for index in range(3):
             target = now.date() + timedelta(days=index)
             x = 474 + index * 170
             if index:
                 pygame.draw.line(surface, LINE, (x - 12, 467), (x - 12, 558), 1)
-            day_label = "TODAY" if index == 0 else "TOMORROW" if index == 1 else WEEKDAYS[target.weekday()].upper()
+            day_label = f"{target.month}/{target.day} {WEEKDAYS[target.weekday()][:3].upper()}"
             self.text(surface, day_label, (x, 462), 11, MUTED)
             forecast = by_day.get(target)
-            label, icon = self._condition(forecast.code if forecast else None)
+            icon = self._weather_kind(forecast.code if forecast else None)
             self._weather_icon(surface, (x + 24, 512), icon)
             high = f"{forecast.high:.0f}" if forecast and forecast.high is not None else "--"
             low = f"{forecast.low:.0f}" if forecast and forecast.low is not None else "--"
@@ -272,7 +301,6 @@ class FieldNotesRenderer:
             self.text(surface, f"/ {low}°", (x + 106, 495), 14, MUTED)
             rain = f"{forecast.rain:.0f}%" if forecast and forecast.rain is not None else "--"
             self.text(surface, f"Rain {rain}", (x + 57, 526), 12, MUTED)
-            self.text(surface, label, (x, 551), 10, MUTED)
         self.text(surface, "Weather: Open-Meteo / CC BY 4.0", (454, 584), 9, MUTED)
 
     def render(self, screen, now=None):
@@ -286,6 +314,7 @@ class FieldNotesRenderer:
         key = (now.year, now.month, now.day, now.hour, now.minute, snapshot.revision, self._artwork_revision)
         if key != self._base_key:
             self._base = self._static.copy()
+            self._sky(self._base, now)
             self._base.blit(self._calendar(now), (0, 0))
             self._moon(self._base, now)
             self._forecast(self._base, now, snapshot)
