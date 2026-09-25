@@ -85,6 +85,14 @@ class FieldNotesRenderer:
         pygame.draw.polygon(surface, fill, points)
         pygame.draw.lines(surface, border, True, points, 1)
 
+    @staticmethod
+    def rounded_fill(surface, rect, color, radius):
+        x, y, width, height = rect
+        scale = 4
+        shape = pygame.Surface((width * scale, height * scale), pygame.SRCALPHA)
+        pygame.draw.rect(shape, color, shape.get_rect(), border_radius=radius * scale)
+        surface.blit(pygame.transform.smoothscale(shape, (width, height)), (x, y))
+
     def _make_static(self):
         surface = pygame.Surface(self.SIZE)
         surface.fill(PAPER)
@@ -95,7 +103,7 @@ class FieldNotesRenderer:
             surface.set_at(point, tuple(channel + shade for channel in PAPER))
         self.panel(surface, (452, 24, 548, 387))
         self.panel(surface, (452, 427, 548, 149))
-        self.panel(surface, (28, 224, 400, 82), INK, INK)
+        self.rounded_fill(surface, (28, 224, 400, 82), INK, 16)
         artwork = pygame.image.load(str(self.assets / "forest-fox.png")).convert()
         artwork = pygame.transform.smoothscale(artwork, (400, 225))
         surface.blit(artwork, (28, 337))
@@ -177,7 +185,7 @@ class FieldNotesRenderer:
                 color = RUST if target in self._holidays or target.weekday() == 6 else SAGE if target.weekday() == 5 else INK
                 selected = day == now.day
                 if selected:
-                    self.panel(result, (x - 26, y - 1, 52, 45), INK, INK)
+                    self.rounded_fill(result, (x - 26, y - 1, 52, 45), INK, 11)
                     color = CARD
                 self.text(result, day, (x, y), 22, color, center=True)
                 if config.get("rokuyou_enabled", True) and config.get("show_rokuyou_names", True):
@@ -322,8 +330,10 @@ class FieldNotesRenderer:
                       (30, 172), 21, INK)
             self._base_key = key
         frame = self._base.copy()
-        self.text(frame, now.strftime("%H:%M"), (26, 64), 112, INK, "serif")
-        self.text(frame, now.strftime("%S"), (398, 133), 23, MUTED, "serif")
+        clock = self.text(frame, now.strftime("%H:%M"), (26, 64), 112, INK, "serif")
+        seconds = self.font(34, "serif").render(now.strftime("%S"), True, MUTED)
+        seconds_x = min(clock.right + 12, 445 - seconds.get_width())
+        frame.blit(seconds, seconds.get_rect(bottomleft=(seconds_x, 166)))
         if screen.get_size() == self.SIZE:
             screen.blit(frame, (0, 0))
         else:
