@@ -1,6 +1,7 @@
 # PiCalendar ディレクトリ構成
 
-PiCalendarプロジェクトは以下のようにファイルが整理されています：
+現行の起動経路は[現行実装](../current-implementation.md)を参照してください。
+以下はファイルの分類であり、全モジュールが `main.py` から使われるわけではありません。
 
 ## ルートディレクトリ
 
@@ -11,7 +12,7 @@ PiCalendarプロジェクトは以下のようにファイルが整理されて�
 ### プロジェクトファイル
 - `README.md` - プロジェクト説明
 - `LICENSE` - MITライセンス
-- `CLAUDE.md` - プロジェクト仕様書（詳細設計）
+- `CLAUDE.md` - 過去の初期仕様書（現行実装への案内付き）
 - `requirements.txt` - Python依存関係
 
 ## ディレクトリ構成
@@ -19,7 +20,7 @@ PiCalendarプロジェクトは以下のようにファイルが整理されて�
 ### `scripts/` - 実行スクリプト
 - `restart.sh` - メイン再起動スクリプト
 - `quick_restart.sh` - クイック再起動
-- `install.sh` - 自動インストールスクリプト
+- `install.sh` - 旧インストールスクリプト（unit生成のパス不整合あり。現在の導入は手動手順を使用）
 - `setup_venv.sh` - 仮想環境セットアップ
 - `install_service.sh` - systemdサービスインストール
 - `run_on_x11.sh` - X11環境での実行スクリプト
@@ -34,6 +35,8 @@ PiCalendarプロジェクトは以下のようにファイルが整理されて�
 - `utils/` - ユーティリティ（月相計算、六曜計算）
 
 ### `assets/` - 静的ファイル
+- `field_notes/` - 現行画面のフォント・標準イラスト・記念日データ
+- `field_notes/monthly/` - 同梱の12か月背景PNGと制作情報
 - `fonts/` - フォントファイル（Noto Sans CJK）
 - `icons/weather/` - 天気アイコン（複数サイズ）
 - `sprites/` - キャラクタースプライトシート
@@ -45,14 +48,14 @@ PiCalendarプロジェクトは以下のようにファイルが整理されて�
 - `implementation/` - 実装履歴
 - `design/` - 設計資料
 
-### `themes/` - テーマファイル
+### `themes/` - 旧画面用の設定資料
 - `default.yaml` - デフォルトテーマ
 - `compact.yaml` - コンパクトレイアウト
 - `night.yaml` - 夜間モード
 - `colorful.yaml` - カラフルテーマ
 - `minimal.yaml` - ミニマルテーマ
 
-### `wallpapers/` - 背景画像
+### `wallpapers/` - classic画面の背景画像
 - 複数の背景画像ファイル（JPG形式）
 - 自動ローテーション対応
 

@@ -1,246 +1,77 @@
 # PiCalendar インストールガイド
 
-## 📋 前提条件
+## 現行版の前提
 
-### ハードウェア
-- Raspberry Pi Zero 2 W 以上
-- 1024×600 解像度のディスプレイ
-- microSDカード（8GB以上）
-- 安定した電源供給（5V 2.5A以上推奨）
-- Wi-Fi接続（天気情報取得用）
+標準表示は Field Notes ダッシュボードです。旧 classic 表示も選べますが、壁紙スライドショーは classic 表示用です。Raspberry Pi OS、Python 3.11 以上、接続するディスプレイを用意してください。天気情報にはネットワーク接続が必要です。
 
-### ソフトウェア
-- Raspberry Pi OS (64-bit推奨)
-- Python 3.11以上
-- インターネット接続
+## インストール
 
-## 🚀 クイックインストール
-
-最も簡単な方法：
+Raspberry Pi 上で通常ユーザーとして実行し、プロジェクトを `~/picalender` に配置します。
 
 ```bash
-# リポジトリをクローン
-git clone https://github.com/zabaglione/picalender.git
-cd picalender
-
-# インストールスクリプトを実行
-./scripts/install.sh
-```
-
-## 📝 詳細インストール手順
-
-### 1. システムの準備
-
-```bash
-# システムを最新状態に更新
-sudo apt update && sudo apt upgrade -y
-
-# 基本的なパッケージをインストール
-sudo apt install -y python3 python3-pip python3-venv git
-
-# 日本語フォントをインストール
-sudo apt install -y fonts-noto-cjk
-
-# Pygameの依存関係をインストール
-sudo apt install -y python3-pygame libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
-```
-
-### 2. アプリケーションのダウンロード
-
-```bash
-# ホームディレクトリに移動
+sudo apt update
+sudo apt install -y python3-full python3-pip python3-venv python3-pygame python3-yaml python3-requests python3-pillow fonts-noto-cjk git
 cd ~
-
-# GitHubからクローン
 git clone https://github.com/zabaglione/picalender.git
-cd picalender
-```
-
-### 3. 仮想環境のセットアップ（推奨）
-
-```bash
-# 仮想環境を作成
+cd ~/picalender
 python3 -m venv venv
-
-# 仮想環境を有効化
-source venv/bin/activate
-
-# pipをアップグレード
-pip install --upgrade pip
-
-# 依存パッケージをインストール
-pip install -r requirements.txt
-```
-
-### 4. 設定ファイルの準備
-
-```bash
-# サンプル設定ファイルをコピー
-cp settings.example.yaml settings.yaml
-
-# 設定を編集（任意）
+venv/bin/python -m pip install --upgrade pip
+venv/bin/python -m pip install -r requirements.txt
+cp -n settings.example.yaml settings.yaml
 nano settings.yaml
 ```
 
-#### 重要な設定項目：
+`scripts/install.sh` は現在、サービスの `INSTALL_DIR` をスクリプト配置先の `scripts/` として扱い、誤った unit パスを生成します。この手順では使わず、上記の手動セットアップを行ってください。
+
+前面起動で表示を確認します。既にサービスが登録・起動済みの環境では、二重起動を避けるため先にサービスを停止してください。
+
+```bash
+sudo systemctl stop picalender
+cd ~/picalender
+venv/bin/python main.py
+```
+
+終了するときは `Ctrl+C` を押します。標準の Field Notes 表示を旧 classic 表示に変える場合は、設定の `ui.style` を `classic` にします。
 
 ```yaml
-# 天気情報の場所を設定（東京の例）
-weather:
-  location:
-    lat: 35.681236    # 緯度
-    lon: 139.767125   # 経度
+ui:
+  style: classic
 ```
 
-### 5. 動作確認
+## systemd サービス
+
+表示確認後、通常ユーザーとしてプロジェクトルートからサービスを登録します。
 
 ```bash
-# テスト起動（Ctrl+Cで終了）
-python3 main.py
-
-# X Window環境の場合
-python3 main_x11.py
-```
-
-## 🔧 自動起動の設定
-
-### systemdサービスとして登録
-
-```bash
-# サービスファイルをインストール
+cd ~/picalender
 sudo ./scripts/install_service.sh
+sudo systemctl cat picalender
+```
 
-# サービスを有効化
-sudo systemctl enable picalender
+このスクリプトは unit を登録して自動起動を有効にしますが、その場では起動しません。生成された unit の `User`、`Group`、`WorkingDirectory`、`PYTHONPATH`、`ExecStart` が実際のユーザーと設置先に合うことを確認してください。テンプレートには固定ユーザー名があり、インストーラーの置換処理が別ユーザーに対応しない場合があります。修正方法は [複数ユーザー設定](MULTI_USER_SETUP.md) を参照してください。
 
-# サービスを開始
+必要箇所を修正した場合は systemd を再読み込みしてから起動します。未修正の場合も、unit の内容を確認してから起動してください。
+
+```bash
+sudo systemctl daemon-reload
 sudo systemctl start picalender
-
-# 状態を確認
-sudo systemctl status picalender
+sudo systemctl status picalender --no-pager
+sudo journalctl -u picalender -f
 ```
 
-### X Window環境での自動起動
+## ログ
+
+この install_service.sh 経由の unit は start_service.sh が main.py の標準出力とエラーを logs/service.log に書きます。journal は unit や起動前のエラー確認に使います。ExecStart が Python を直接起動する unit では、アプリの出力も journal に記録されます。
 
 ```bash
-# X11用の自動起動設定
-./scripts/setup_autostart_fullscreen.sh
+sudo journalctl -u picalender -b -n 100 --no-pager
+tail -n 100 ~/picalender/logs/service.log
 ```
 
-## 🎨 初期設定
+## 関連ドキュメント
 
-### 壁紙の追加
-
-```bash
-# サンプル壁紙を生成
-python3 scripts/generate_sample_wallpapers.py
-
-# 独自の壁紙を追加
-cp your_image.jpg wallpapers/
-```
-
-### テーマの適用
-
-```bash
-# 利用可能なテーマを確認
-python3 theme_manager.py list
-
-# ナイトモードを適用
-python3 theme_manager.py apply night
-
-# 再起動して反映
-./scripts/quick_restart.sh
-```
-
-## ⚠️ トラブルシューティング
-
-### PEP 668エラーが出る場合
-
-```bash
-# 仮想環境を使用
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-
-# または --break-system-packages オプションを使用（非推奨）
-pip3 install -r requirements.txt --break-system-packages
-```
-
-### 画面が表示されない場合
-
-```bash
-# KMSドライバを有効化
-echo "dtoverlay=vc4-kms-v3d" | sudo tee -a /boot/config.txt
-sudo reboot
-```
-
-### ALSAエラーが出る場合
-
-音声は使用しないため、エラーは無視して構いません。
-
-### メモリ不足の場合
-
-```bash
-# スワップサイズを増やす
-sudo dphys-swapfile swapoff
-sudo nano /etc/dphys-swapfile
-# CONF_SWAPSIZE=512 に変更
-sudo dphys-swapfile setup
-sudo dphys-swapfile swapon
-```
-
-## 📱 リモートアクセス
-
-### SSH経由でファイル転送
-
-```bash
-# 壁紙を転送
-scp wallpaper.jpg pi@raspberrypi.local:~/picalender/wallpapers/
-
-# 複数ファイルを転送
-scp *.jpg pi@raspberrypi.local:~/picalender/wallpapers/
-```
-
-### VNC設定（オプション）
-
-```bash
-# VNCサーバーをインストール
-sudo apt install -y realvnc-vnc-server
-sudo systemctl enable vncserver-x11-serviced
-```
-
-## ✅ インストール完了の確認
-
-以下が正常に動作すれば成功です：
-
-1. ✅ 時計が表示される
-2. ✅ カレンダーが正しい曜日で表示される
-3. ✅ 天気情報が取得できる（要インターネット）
-4. ✅ 壁紙が表示される
-5. ✅ 自動起動が設定されている
-
-## 🆘 サポート
-
-問題が解決しない場合：
-
-1. ログを確認：
-   ```bash
-   sudo journalctl -u picalender -n 50
-   tail -f ~/picalender/logs/restart.log
-   ```
-
-2. 診断スクリプトを実行：
-   ```bash
-   ./scripts/diagnose.sh
-   ```
-
-3. GitHubでIssueを作成：
-   https://github.com/zabaglione/picalender/issues
-
-## 📚 関連ドキュメント
-
-- [README.md](README.md) - プロジェクト概要
-- [QUICK_START.md](QUICK_START.md) - クイックスタート
-- [SETTINGS_GUIDE.md](SETTINGS_GUIDE.md) - 設定ガイド
-- [THEME_GUIDE.md](THEME_GUIDE.md) - テーマガイド
-- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - トラブルシューティング
+- [プロジェクト README](../../README.md)
+- [クイックスタート](QUICK_START.md)
+- [設定ガイド](SETTINGS_GUIDE.md)
+- [壁紙の転送](TRANSFER_FILES.md)
+- [トラブルシューティング](TROUBLESHOOTING.md)

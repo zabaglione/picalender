@@ -1,3 +1,5 @@
+> 過去の環境構築・移行・試験記録です（2026-10-01区分）。現行版の起動方法・設定・確認範囲は[現行実装](current-implementation.md)を参照してください。
+
 # PiCalendar - X Window環境での設定
 
 ## X Windowが起動している場合の対処法

@@ -1,117 +1,89 @@
-# 複数ユーザー環境でのPiCalendarセットアップ
+# 複数ユーザー環境でのセットアップ
 
-PiCalendarは標準の`pi`ユーザー以外でも動作します。
-
-## 任意のユーザーでのセットアップ手順
-
-### 1. アプリケーションのクローン
+PiCalendar は標準の `pi` ユーザー以外でも動作します。PiCalendar の実行ユーザーでログインし、そのユーザーのホームディレクトリに `picalender` を配置します。
 
 ```bash
-# 任意のユーザーでログイン（例: zabaglione）
+sudo apt update
+sudo apt install -y python3-full python3-pip python3-venv python3-pygame python3-yaml python3-requests python3-pillow fonts-noto-cjk git
 cd ~
 git clone https://github.com/zabaglione/picalender.git
-cd picalender
+cd ~/picalender
+python3 -m venv venv
+venv/bin/python -m pip install -r requirements.txt
+cp -n settings.example.yaml settings.yaml
 ```
 
-### 2. 依存関係のインストール
+現在の `scripts/install.sh` は `INSTALL_DIR` をスクリプト配置先の `scripts/` として扱い、誤った service path を生成します。使用せず、上記の手動手順で環境を準備してください。
+
+## 表示確認
+
+既に PiCalendar のサービスが起動している場合は、前面起動と二重にならないよう先に停止します。
 
 ```bash
-# 通常のインストール手順
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y python3-pip python3-pygame fonts-noto-cjk git
-pip3 install -r requirements.txt
+sudo systemctl stop picalender
+cd ~/picalender
+venv/bin/python main.py
 ```
 
-### 3. systemdサービスのインストール（任意のユーザー対応）
+終了するときは `Ctrl+C` を押します。
+
+## systemd サービスの登録
+
+通常ユーザーとしてプロジェクトルートから実行します。
 
 ```bash
-# 自動的に現在のユーザーを検出してサービスファイルを生成
+cd ~/picalender
 sudo ./scripts/install_service.sh
+sudo systemctl cat picalender
 ```
 
-このスクリプトは：
-- `sudo`で実行された場合、元のユーザー（`$SUDO_USER`）を検出
-- 直接rootで実行された場合、ユーザー名の入力を求める
-- サービスファイルを自動的にカスタマイズ
+このスクリプトは `sudo` 実行時に `SUDO_USER` を読み取り、アプリケーションが `~/picalender` にある前提で unit を登録して自動起動を有効にします。その場ではサービスを開始しません。
 
-### 4. 実行確認
+現在の `scripts/picalender.service` テンプレートは `zabaglione` とそのホームパスを含みますが、インストーラーの置換処理は `pi` と `/home/pi/picalender` だけを置き換えます。別ユーザーではテンプレート値が残ることがあるため、起動前に生成済み unit を確認してください。
 
 ```bash
-# 手動実行でテスト
-python3 main.py
-
-# サービス起動でテスト
-sudo systemctl start picalender
-sudo systemctl status picalender
+sudo systemctl cat picalender
 ```
 
-## 生成されるサービスファイル
+ユーザー名または設置先が違う場合は unit を編集します。
 
-`install_service.sh`実行後、以下の内容で`/etc/systemd/system/picalender.service`が生成されます：
+```bash
+sudo systemctl edit --full picalender
+```
+
+少なくとも次の値を実際の環境に合わせます。
 
 ```ini
-[Unit]
-Description=PiCalendar Clock Kiosk (pygame KMSDRM)
-After=multi-user.target network.target
-
-[Service]
-Type=simple
-User=zabaglione          # ← 実際のユーザー名に置換
-Group=zabaglione         # ← 実際のユーザー名に置換
-WorkingDirectory=/home/zabaglione/picalender  # ← 実際のパスに置換
-Environment="SDL_VIDEODRIVER=kmsdrm"
-ExecStart=/usr/bin/python3 /home/zabaglione/picalender/main.py  # ← 実際のパスに置換
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
+User=USERNAME
+Group=USERNAME
+WorkingDirectory=/home/USERNAME/picalender
+Environment="PYTHONPATH=/home/USERNAME/picalender:/home/USERNAME/picalender/src:/home/USERNAME/picalender/src/renderers"
+ExecStart=/home/USERNAME/picalender/scripts/start_service.sh
 ```
 
-## 注意点
-
-### ユーザー権限
-- PiCalendarは通常ユーザーで実行されます
-- KMSDRMを使用する場合、ユーザーが`video`グループに所属している必要があります：
+`USERNAME` と `/home/USERNAME` は実際のユーザー名とホームディレクトリに置き換えます。編集後に systemd を再読み込みしてから起動します。
 
 ```bash
-# 現在のユーザーをvideoグループに追加
-sudo usermod -a -G video $USER
-# ログアウト・ログインで反映
+sudo systemctl daemon-reload
+sudo systemctl start picalender
+sudo systemctl status picalender --no-pager
 ```
 
-### ホームディレクトリの場所
-- `/home/username/picalender`が標準パス
-- 異なる場所にインストールした場合、手動でサービスファイルを編集
+テンプレートの実行ユーザーに DRM デバイス権限がない場合は、そのユーザーを `video` グループに追加してからサービスを再起動します。
 
-### 複数ユーザーでの同時実行
-- 同じRaspberry Pi上で複数ユーザーがPiCalendarを同時実行することは想定されていません
-- ディスプレイとGPUリソースが競合する可能性があります
-
-## トラブルシューティング
-
-### サービスファイル確認
 ```bash
-# 生成されたサービスファイルの内容確認
-sudo systemctl cat picalender
-
-# サービス状態の確認
-sudo systemctl status picalender
+sudo usermod -aG video USERNAME
+sudo systemctl restart picalender
 ```
 
-### ログ確認
+## ログ
+
+この unit テンプレートではアプリの標準出力とエラーは logs/service.log に記録されます。journal は unit や起動前のエラー確認に使います。
+
 ```bash
-# systemdログ
 sudo journalctl -u picalender -f
-
-# アプリケーションログ
-tail -f ~/picalender/logs/restart_*.log
+tail -f ~/picalender/logs/service.log
+sudo systemctl cat picalender
 ```
 
-### 権限問題の解決
-```bash
-# ファイル権限を現在のユーザーに設定
-sudo chown -R $USER:$USER ~/picalender
-
-# video群への追加確認
-groups $USER | grep video
-```
+同じ Pi 上で複数ユーザーが同時に画面を占有して起動する運用は避けてください。

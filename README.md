@@ -1,413 +1,120 @@
 # PiCalendar - Raspberry Pi向け情報表示端末
 
-[![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Raspberry%20Pi-red.svg)](https://www.raspberrypi.org/)
+Raspberry Pi Zero 2 Wと1024×600の画面向けの常時表示アプリです。時計、カレンダー、祝日、六曜、月齢、天文時刻、3日分の天気予報を表示します。
 
-## 概要
+標準の **Field Notes** は12か月の手描き・和紙調背景を自動で切り替えます。2026-10-01に背景と日替わり画像の生成入力を更新しました。実装と検証範囲は[月替わりテーマ](docs/monthly-wafu-themes.md)を参照してください。
 
-2026-09-18: 手描きイラストの **Field Notes** デザインを追加し、月齢・月の図形・六曜の計算を修正しました。
-[更新・復旧手順](docs/guides/UPDATE_GUIDE.md)と[検証記録](docs/redesign-validation-2026-09-18.md)を参照してください。
+![Field Notesの画面（2026-09-18の検証時。現在の月別背景とは異なります）](docs/images/demo.png)
 
-PiCalendarは、Raspberry Pi Zero 2 W向けの常時表示アプリです。時計、カレンダー、六曜、月齢、天気予報を、手描きイラストを添えた落ち着いた画面にまとめています。
+## 機能
 
-![PiCalendar Field Notes — Raspberry Piの実機画面](docs/images/demo.png)
+- 時計、日付、日曜／月曜始まりの当月カレンダー、日本の祝日、旧暦に基づく六曜。
+- 実際の新月から求める月齢、照明率に応じた月の形、英日併記の月相名。新月・上弦・満月・下弦の名称はJSTの現象日に表示。
+- 設定地点の日の出・日の入・月の出・月の入、次の月相と祝日。
+- Open-Meteoの3日予報、取得日時、欠測・古い予報の区別。通信失敗時は取得済みデータを保持。
+- 12か月の背景は同梱PNGを使用し、ネット接続なしで切り替え。
+- 任意の日替わり画像は別サーバーのCodexで生成。記念日・季節・祝日・有効な予報を入力し、取得失敗時は前の画像を保持。[設定手順](docs/guides/DAILY_ARTWORK.md)
+- KMSDRM／X11／macOSの環境検出、systemdによる自動起動。
 
-### 主な機能
+旧画面は `ui.style: classic` で使用できます。旧画面の壁紙やフォント設定は、標準画面には適用されません。キャラクター・高度な設定管理のモジュールは残っていますが、現在の `main.py` には接続されていません。
 
-- **Field Notesデザイン** - 紙色・深い緑・手描きの森とキツネ、同梱フォントによる統一した表示
-- **日替わりイラスト（任意）** - Piから自宅サーバーのCodexへ生成依頼。日付・季節・祝日・天気に応じた絵を表示し、サーバーに全日分、Piには最新1枚を保持。[設定手順](docs/guides/DAILY_ARTWORK.md)
-- **時計・カレンダー** - 秒表示、日本の祝日、旧暦に基づく六曜。日曜始まり・月曜始まりに対応
-- **月齢・月相** - 実際の新月から月齢を算出し、照明率に合った月の形をオフラインで描画
-- **次の予定と天文時刻** - 次の祝日・月相、設定地点の日の出・日の入・月の出・月の入を表示
-- **天気予報** - Open-Meteoの3日予報。通信失敗時は取得済みデータを保持し、欠測値や古い日付を区別
-- **軽量描画** - 画像・カレンダー等をキャッシュ。Pi Zero 2 Wでの短時間計測結果は[検証記録](docs/redesign-validation-2026-09-18.md)を参照
-- **自動起動** - systemdサービスとPython仮想環境に対応
-- **旧デザイン** - `ui.style: classic` で従来のレイアウトを使用可能。以下の既存テーマ・壁紙の説明は主に旧デザイン向け
+## セットアップ
 
-## 動作環境
+Python 3.11以上、pygame 2.5以上と `requirements.txt` の依存関係を使用します。天気取得にはネット接続が必要ですが、暦・月・背景の表示はオフラインで動作します。
 
-### ハードウェア要件
-- Raspberry Pi Zero 2 W（推奨）またはそれ以上
-- 解像度1024×600のディスプレイ
-- microSDカード（8GB以上推奨）
-- 安定した電源供給
-
-### ソフトウェア要件
-- Raspberry Pi OS Lite (64-bit推奨)
-- Python 3.11以上
-- pygame 2.0以上
-- インターネット接続（天気情報取得用）
-
-## インストール
-
-### 1. システムの準備
+Raspberry Pi OSで、通常ユーザーのホームへ導入します。
 
 ```bash
-# システムアップデート
-sudo apt update && sudo apt upgrade -y
-
-# 必要なパッケージのインストール
-sudo apt install -y python3-pip python3-pygame fonts-noto-cjk git
-```
-
-### 2. アプリケーションのダウンロード
-
-```bash
-# リポジトリのクローン
-git clone https://github.com/zabaglione/picalender.git
-cd picalender
-```
-
-### 3. 依存関係のインストール
-
-#### 方法1: 仮想環境を使用（推奨）
-
-```bash
-# 仮想環境の作成
+sudo apt update
+sudo apt install -y python3-pip python3-venv python3-pygame fonts-noto-cjk git
+git clone https://github.com/zabaglione/picalender.git ~/picalender
+cd ~/picalender
 python3 -m venv venv
-
-# 仮想環境の有効化
-source venv/bin/activate
-
-# 依存関係のインストール
-pip install -r requirements.txt
-```
-
-#### 方法2: システムワイドインストール
-
-```bash
-# Raspberry Pi OS (Bookworm以降)の場合
-pip3 install -r requirements.txt --break-system-packages
-```
-
-### 4. 設定
-
-```bash
-# 設定ファイルのコピー（初回のみ）
+venv/bin/python -m pip install -r requirements.txt
 cp settings.example.yaml settings.yaml
-
-# 設定の編集（必須：場所の座標を変更）
 nano settings.yaml
 ```
 
-主な設定項目：
-- `ui.style` - 新デザインの `field_notes`（既定）または旧デザインの `classic`
-- `calendar.show_rokuyou_names` - 六曜表示の有効/無効
-- `weather.location` - 天気情報を取得する地点の座標
-- `screen.fullscreen` - フルスクリーン表示の有効/無効
-
-### 5. 自動起動の設定
-
-```bash
-# インストールスクリプトの実行
-sudo ./scripts/install_service.sh
-
-# サービスの有効化
-sudo systemctl enable picalender
-sudo systemctl start picalender
-```
-
-## 使用方法
-
-### 手動起動
-
-```bash
-# 仮想環境を使用している場合
-source venv/bin/activate
-python main.py
-
-# 統合版で起動（環境自動検出）
-python3 main.py
-
-# 環境変数での制御
-PICALENDER_FULLSCREEN=true python3 main.py
-PICALENDER_WINDOWED=true python3 main.py
-```
-
-### クイック再起動
-
-```bash
-# 簡単再起動スクリプト（仮想環境自動検出）
-./scripts/quick_restart.sh
-
-# または従来のrestart.sh
-./scripts/restart.sh
-```
-
-### サービス管理
-
-```bash
-# サービスの状態確認
-sudo systemctl status picalender
-
-# サービスの停止
-sudo systemctl stop picalender
-
-# サービスの再起動
-sudo systemctl restart picalender
-
-# ログの確認
-sudo journalctl -u picalender -f
-```
-
-## 設定ファイル
-
-`settings.yaml`で様々な設定をカスタマイズできます：
+`cp` は初回のみ実行してください。既存の設定は保持します。pygameの導入・表示環境の詳細は[インストールガイド](docs/guides/INSTALL_GUIDE.md)を参照してください。
 
 ```yaml
-# 画面設定
+ui:
+  style: field_notes
 screen:
   width: 1024
   height: 600
-  fps: 30
+  fps: 5
   fullscreen: true
-
-# UI設定
-ui:
-  style: field_notes
-  margins: { x: 24, y: 16 }
-  clock_font_px: 130
-  date_font_px: 36
-  calendar_font_px: 22
-  weather_font_px: 22
-
-# カレンダー設定
+weather:
+  timezone: Asia/Tokyo
+  location:
+    lat: 35.681236
+    lon: 139.767125
+  refresh_sec: 1800
 calendar:
-  show_holiday_names: true  # 祝日名の表示
-  show_rokuyou_names: true  # 六曜の表示
-  rokuyou_format: single    # 六曜表示形式 (full/short/single)
-  moon_phase_enabled: true  # 月齢表示
-  moon_phase_format: graphic # 月齢表示形式 (emoji/text/ascii/graphic)
-
-# 天気設定
-weather:
-  provider: openmeteo
-  location: 
-    lat: 35.681236    # 緯度
-    lon: 139.767125   # 経度
-  refresh_sec: 1800   # 30分ごとに更新
-
-# キャラクター設定（現在無効）
-character:
-  enabled: false
-  sprite: ./assets/sprites/char_idle.png
-  frame_width: 128
-  frame_height: 128
-  fps: 8
-
-# 壁紙設定
-background:
-  dir: ./wallpapers
-  mode: fit           # fit または fill
-  rescan_sec: 300     # 5分ごとに切替
+  first_weekday: SUNDAY
+  holidays_enabled: true
+  show_holiday_names: true
+  rokuyou_enabled: true
+  show_rokuyou_names: true
+  moon_phase_enabled: true
 ```
 
-## テーマ機能
+座標は利用地点に変更してください。Field Notesは1024×600基準の固定配置で、別寸法では縦横比を保って全体を拡縮します。別寸法の実機確認は今回行っていません。[設定項目の対応表](docs/guides/SETTINGS_STATUS.md)で画面ごとの差を確認できます。
 
-標準の `field_notes` 画面は、設定されたタイムゾーンの月初に和風月名をモチーフにした12種類のデザインへ自動で切り替わります。睦月の結び紐、如月の重ね衣、皐月の早苗、長月の星空など、配色とともに背景の図案やカードの枠も変わります。表示項目・配置・日替わり画像は維持します。意匠とプレビュー方法は[月替わりの和風テーマ](docs/monthly-wafu-themes.md)をご覧ください。
+## 起動・運用
 
-### テーマの適用
+手動起動はデスクトップ／表示可能な端末で実行します。
 
 ```bash
-# 利用可能なテーマを表示
-python3 theme_manager.py list
-
-# テーマを適用（例：ナイトモード）
-python3 theme_manager.py apply night
-./scripts/quick_restart.sh
-
-# 現在のテーマを確認
-python3 theme_manager.py current
+cd ~/picalender
+venv/bin/python main.py
+# 開発用ウィンドウ表示
+PICALENDER_WINDOWED=true venv/bin/python main.py
 ```
 
-### プリセットテーマ
-
-- **default** - 標準的な表示設定
-- **compact** - 小さいフォントで情報を詰めて表示
-- **night** - 暗めの配色で夜間向け
-- **colorful** - 明るく鮮やかな配色
-- **minimal** - 必要最小限の情報のみ
-
-### カスタムテーマの作成
+Piでサービスを導入する場合：
 
 ```bash
-# 現在の設定をテーマとして保存
-python3 theme_manager.py create my_theme -d "私のカスタムテーマ"
-```
-
-## カスタマイズ
-
-### 壁紙の追加
-
-`wallpapers/`ディレクトリに画像ファイルを追加すると自動的に認識されます：
-
-```bash
-# JPG/PNG形式の画像を追加
-cp your_image.jpg wallpapers/
-```
-
-### キャラクターの変更
-
-1. スプライトシート画像を`assets/sprites/`に配置
-2. `settings.yaml`の`character.sprite`パスを更新
-3. フレームサイズを調整
-
-### フォントの変更
-
-1. TrueTypeフォントを`assets/fonts/`に配置
-2. `settings.yaml`の`fonts.main`パスを更新
-
-## トラブルシューティング
-
-### サービスが起動しない
-
-```bash
-# ユーザー名エラー (217/USER) の場合
-# サービスファイルを再インストール
 sudo ./scripts/install_service.sh
-
-# ログディレクトリの確認
-ls -la ~/picalender/logs/
-
-# サービスログの確認
-journalctl -u picalender --since "1 hour ago"
+systemctl cat picalender
 ```
 
-### 画面が表示されない
+現在の同梱テンプレートにはユーザーとホームパスの固定値が残り、インストーラーの置換対象と一致していません。開始前に `User`、`Group`、`WorkingDirectory`、`ExecStart`、`PYTHONPATH` が自身の環境を指すことを確認し、異なる場合は `sudo systemctl edit --full picalender` で修正して `sudo systemctl daemon-reload` を実行してください。
 
 ```bash
-# ディスプレイドライバの確認
-ls /dev/fb*
-
-# KMSドライバの有効化
-echo "dtoverlay=vc4-kms-v3d" | sudo tee -a /boot/config.txt
-sudo reboot
-```
-
-### 天気が取得できない
-
-```bash
-# ネットワーク接続の確認
-ping -c 4 api.open-meteo.com
-
-# DNS設定の確認
-cat /etc/resolv.conf
-```
-
-### パフォーマンスが低い
-
-設定ファイルで品質レベルを調整：
-
-```yaml
-performance:
-  default_quality: low  # ultra_low, low, medium, high
-  auto_adjust: true
-```
-
-### ログの確認
-
-```bash
-# システムログ
+sudo systemctl enable --now picalender
+sudo systemctl status picalender --no-pager
+sudo systemctl restart picalender
 sudo journalctl -u picalender --since today
-
-# アプリケーションログ
-tail -f logs/picalender.log
 ```
 
-## 開発
+サービス運用時の再起動には `systemctl` を使用します。[接続・更新・復旧](docs/guides/UPDATE_GUIDE.md)にバックアップ付き転送、ロールバック、画面取得の手順があります。
 
-### テストの実行
+## 開発・確認
+
+リポジトリにMakefileはありません。現在のダッシュボードに関するテスト：
 
 ```bash
-# 全テストの実行
-make test
-
-# 単体テストのみ
-make test-unit
-
-# 統合テストのみ
-make test-integration
-
-# カバレッジレポート
-make coverage
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy venv/bin/python -m pytest -q \
+  tests/test_astronomy_accuracy.py tests/test_dashboard_weather.py \
+  tests/test_monthly_theme.py tests/test_daily_art.py tests/test_staged_update.py
+venv/bin/python scripts/render_preview.py --offline --all-months \
+  --output output/monthly/preview.png
 ```
 
-### コード品質チェック
+全体の既存テストは `venv/bin/python -m pytest tests` で実行できます。過去の設計向けテストを含むため、全件成功や現行画面の実機受け入れを意味しません。対象テスト、プレビュー、Pi上の稼働画面、物理パネルの確認は区別して記録します。
 
-```bash
-# リンター実行
-make lint
+## ドキュメント
 
-# フォーマット
-make format
+- [文書一覧と現行／過去資料の区分](docs/README.md)
+- [設定ガイド](docs/guides/SETTINGS_GUIDE.md)、[機能一覧](docs/guides/FEATURES.md)
+- [月替わりテーマ](docs/monthly-wafu-themes.md)、[日替わりイラスト](docs/guides/DAILY_ARTWORK.md)
+- [運用マニュアル](docs/OPERATION_MANUAL.md)、[実装API](docs/API_DOCUMENTATION.md)
+- [2026-10-01の文書・Issues監査](docs/documentation-audit-2026-10-01.md)
 
-# タイプチェック
-make typecheck
-```
+## ライセンス・クレジット
 
-### ベンチマーク
+[MITライセンス](LICENSE)。天気はOpen-Meteo、暦・天文計算はAstronomy Engineとholidaysを使用します。Field NotesのフォントはDM Sans、Fraunces、Zen Maru Gothicで、利用条件は `assets/field_notes/` の各OFLファイルに収録しています。背景画像の制作情報は[アセットREADME](assets/field_notes/monthly/README.md)にあります。
 
-```bash
-# パフォーマンステスト
-make benchmark
-```
-
-## パフォーマンス最適化
-
-### 推奨設定（Raspberry Pi Zero 2 W）
-
-```yaml
-performance:
-  default_quality: low
-  auto_adjust: true
-  
-screen:
-  fps: 15
-  
-weather:
-  refresh_sec: 3600  # 1時間ごと
-  
-background:
-  rescan_sec: 600    # 10分ごと
-```
-
-### メモリ使用量の削減
-
-- キャラクターアニメーションを無効化
-- 背景画像のサイズを最適化（1024×600）
-- キャッシュサイズを制限
-
-## ライセンス
-
-このプロジェクトはMITライセンスの下で公開されています。詳細は[LICENSE](LICENSE)ファイルを参照してください。
-
-## クレジット
-
-- **天気データ**: [Open-Meteo](https://open-meteo.com/) - 無料の天気予報API
-- **フォント**: [Noto Sans CJK](https://github.com/googlefonts/noto-cjk) - Google Fonts
-- **アイコン**: Weather Icons - 天気アイコンセット
-
-## 貢献
-
-プルリクエストを歓迎します！大きな変更の場合は、まずissueを開いて変更内容について議論してください。
-
-1. プロジェクトをフォーク
-2. フィーチャーブランチを作成 (`git checkout -b feature/AmazingFeature`)
-3. 変更をコミット (`git commit -m 'Add some AmazingFeature'`)
-4. ブランチにプッシュ (`git push origin feature/AmazingFeature`)
-5. プルリクエストを開く
-
-## サポート
-
-問題が発生した場合は、[Issues](https://github.com/zabaglione/picalender/issues)でお知らせください。
-
-## 作者
-
-- zabaglione - [@z_zabaglione](https://twitter.com/z_zabaglione)
-
-## 謝辞
-
-- Raspberry Pi Foundationの素晴らしいハードウェア
-- オープンソースコミュニティの皆様
-- このプロジェクトに貢献してくださったすべての方々
+不具合や改善案は[GitHub Issues](https://github.com/zabaglione/picalender/issues)へ。

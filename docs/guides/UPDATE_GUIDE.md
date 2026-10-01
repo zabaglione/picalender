@@ -31,7 +31,8 @@ sudo systemctl restart picalender
 ```
 
 Field Notesは `astronomy-engine==2.1.19` が必要。
-既存環境への今回の導入では、このパッケージだけを追加した。
+このパッケージの初回追加は2026-09-18の作業記録です。通常の更新では
+上記の `requirements.txt` で現在の依存関係を確認します。
 
 旧 `quick_restart.sh` はプロセスを直接起動するため、systemd管理の環境では
 上記の `systemctl restart` を使用する。

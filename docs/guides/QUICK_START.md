@@ -1,59 +1,47 @@
-# PiCalendar クイックスタートガイド
+# PiCalendar クイックスタート
 
-## 🚀 自動起動＆フルスクリーン設定（1コマンド）
+## インストール
 
-Raspberry Piの電源を入れたら自動的にPiCalendarがフルスクリーン表示されるようにする：
+Raspberry Pi 上で通常ユーザーとして実行します。プロジェクトを `~/picalender` に置き、仮想環境へ依存関係をインストールします。
+
+```bash
+sudo apt update
+sudo apt install -y python3-full python3-pip python3-venv python3-pygame python3-yaml python3-requests python3-pillow fonts-noto-cjk git
+cd ~
+git clone https://github.com/zabaglione/picalender.git
+cd ~/picalender
+python3 -m venv venv
+venv/bin/python -m pip install -r requirements.txt
+cp -n settings.example.yaml settings.yaml
+nano settings.yaml
+```
+
+現在の `scripts/install.sh` は systemd unit の設置先を誤って生成するため、この導入手順では使いません。詳細は [インストールガイド](INSTALL_GUIDE.md) を参照してください。
+
+表示場所を変える場合は、settings.yaml の天気設定にある緯度と経度を変更してください。
+
+## 表示確認
+
+既にサービスが起動している環境では、二重起動を避けるため先に停止します。
+
+```bash
+sudo systemctl stop picalender
+cd ~/picalender
+venv/bin/python main.py
+```
+
+終了するときは `Ctrl+C` を押します。標準は Field Notes ダッシュボードです。旧 classic 表示を使う場合は `settings.yaml` の `ui.style` を `classic` にします。
+
+## systemd で起動
+
+プロジェクトルートからサービスを登録し、unit のユーザーとパスを確認します。修正が必要な場合は [複数ユーザー設定](MULTI_USER_SETUP.md) の手順に従ってください。
 
 ```bash
 cd ~/picalender
-./scripts/setup_autostart_fullscreen.sh
-sudo reboot
+sudo ./scripts/install_service.sh
+sudo systemctl cat picalender
+sudo systemctl start picalender
+sudo systemctl status picalender --no-pager
 ```
 
-これだけで完了です！
-
-## ✅ 設定内容
-
-上記のコマンドで以下が自動設定されます：
-
-- 🖥️ **自動起動** - X Window起動時に自動でPiCalendarが起動
-- 🔲 **フルスクリーン** - 全画面表示
-- 🚫 **スクリーンセーバー無効** - 画面が消えない
-- ⚡ **最適化** - Raspberry Pi用に最適化
-
-## 📱 操作方法
-
-- **終了**: ESCキーまたはQキー
-- **フルスクリーン切り替え**: F11キー（通常は不要）
-
-## 🔧 トラブルシューティング
-
-### 表示されない場合
-
-```bash
-# 手動で実行してエラーを確認
-cd ~/picalender
-python3 main_x11.py
-```
-
-### ログ確認
-
-```bash
-# 自動起動ログ
-tail -f ~/picalender/logs/autostart.log
-```
-
-### 自動起動を無効にしたい場合
-
-```bash
-rm ~/.config/autostart/picalender.desktop
-```
-
-## 💡 ヒント
-
-- 初回起動時は少し時間がかかります（5-10秒）
-- メモリ不足の場合はRaspberry Pi OSのGUIを軽量版に変更することを推奨
-
-## 📞 サポート
-
-問題が発生した場合は、[Issues](https://github.com/zabaglione/picalender/issues)でお知らせください。
+install_service.sh は自動起動を有効にしますが、登録時点では開始しません。アプリの標準出力とエラーは logs/service.log に記録され、journal には unit や起動前のエラーが記録されます。

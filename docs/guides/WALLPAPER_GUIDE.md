@@ -2,7 +2,7 @@
 
 ## 🖼️ 壁紙自動更新機能
 
-PiCalendarには壁紙を自動的に切り替える機能があります。
+`ui.style: classic` の旧画面向けです。標準のField Notesは同梱の月別背景を使用するため、この壁紙設定は適用されません。
 
 ### 機能概要
 
@@ -133,7 +133,10 @@ tail -f ~/picalender/logs/restart.log | grep -i wallpaper
 
 ```bash
 # 最新版を取得して再起動
-cd ~/picalender && git pull && ./scripts/quick_restart.sh
+cd ~/picalender
+git status --short
+git pull --ff-only
+sudo systemctl restart picalender
 ```
 
 壁紙が自動的に切り替わることを確認してください。

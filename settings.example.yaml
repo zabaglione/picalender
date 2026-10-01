@@ -1,13 +1,7 @@
-# PiCalendar 設定ファイル (サンプル) - v1.1.0対応
-# このファイルを settings.yaml にコピーして使用してください
-# cp settings.example.yaml settings.yaml
-#
-# 📌 主な改善点（v1.1.0）：
-# - 統合版main.py（環境自動検出）
-# - CPU使用率大幅削減（fps: 5推奨）
-# - カレンダーフォントサイズ最適化（cal_font_px: 28）
-# - 文字重複問題修正
-# - 6週カレンダー対応
+# PiCalendar 設定サンプル（2026-10-01）
+# 初回のみ settings.yaml へコピーしてください。既存設定は保持します。
+# 標準画面はField Notes。旧画面の設定はclassicでのみ使用します。
+# 設定対応表: docs/guides/SETTINGS_STATUS.md
 
 # 画面設定
 screen:
@@ -15,9 +9,9 @@ screen:
   height: 600              # 画面高さ（ピクセル）
   fps: 5                   # フレームレート（CPU使用率軽減のため低く設定）
   fullscreen: true         # フルスクリーン表示
-  hide_cursor: true        # マウスカーソルを隠す
+  hide_cursor: true        # この値は未使用。フルスクリーン処理でカーソルを隠す
 
-# レイアウト設定（ウィジェットの配置）
+# 旧classic画面のレイアウト設定（一部のみ対応）
 layout:
   clock:
     position: "top-center"    # 位置（top-left, top-center, top-right, center, bottom-left, bottom-center, bottom-right）
@@ -40,10 +34,10 @@ layout:
     x_offset: -100            # X座標の微調整
     y_offset: 40              # Y座標の微調整（カレンダーとの重複回避）
 
-# UI設定
+# UI設定（style以外のサイズ・色は主に旧classic用）
 ui:
   style: field_notes # field_notes or classic
-  margins:
+  margins: # 現行main.pyでは未使用
     x: 24                  # 左右マージン
     y: 16                  # 上下マージン
   clock_font_px: 130       # 時計のフォントサイズ
@@ -66,27 +60,27 @@ ui:
 
 # カレンダー設定
 calendar:
-  first_weekday: "SUNDAY"  # 週の始まり (SUNDAY or MONDAY)
+  first_weekday: "SUNDAY"  # Field Notesの週始まり。classicは日曜固定
   holidays_enabled: true   # 祝日表示のON/OFF
   holidays_country: "JP"   # 国コード（JP=日本）
   show_holiday_names: true # 祝日名の表示（true=表示, false=色のみ）
   rokuyou_enabled: true    # 六曜表示のON/OFF
   show_rokuyou_names: true # 六曜名の表示（true=表示, false=色のみ）
-  rokuyou_format: "single" # 六曜の表示形式（"full", "short", "single"）
+  rokuyou_format: "single" # classicの六曜表示形式（"full", "short", "single"）
   moon_phase_enabled: true # 月相表示のON/OFF
-  moon_phase_format: "graphic" # 月相の表示形式（"emoji", "text", "ascii", "graphic"）
+  moon_phase_format: "graphic" # classicの月相表示形式（"emoji", "text", "ascii", "graphic"）
 
-# 背景設定
-background:
-  dir: "./wallpapers"      # 壁紙ディレクトリ
-  mode: "fit"              # 表示モード (fit or fill)
-  rescan_sec: 300          # 壁紙切替間隔（秒）
+# 旧classic画面の壁紙（ディレクトリは ./wallpapers 固定）
+wallpaper:
+  fit_mode: "fit"         # fit / fill / stretch
+  rotation_seconds: 300   # 切替間隔。0で固定。追加画像は60秒ごとに検出
 
 # 天気設定
 weather:
-  provider: "openmeteo"    # 天気プロバイダ
+  provider: "openmeteo"    # 現行画面はOpen-Meteo固定。この選択値は未使用
   refresh_sec: 1800        # 更新間隔（秒）= 30分
-  timeout_sec: 10          # タイムアウト（秒）
+  timeout_sec: 10          # 現行画面では未使用（取得側で固定）
+  timezone: "Asia/Tokyo"   # Field Notesの時刻・月切替・天気
   location:
     # 東京の座標（お住まいの地域に変更してください）
     lat: 35.681236         # 緯度
@@ -101,7 +95,7 @@ daily_art:
   # identity_file: "~/.ssh/id_ed25519"
   themes: {}              # 例: {"2026-12-25": "A quiet winter celebration"}
 
-# キャラクター設定（オプション）
+# キャラクター設定（現行main.pyに未統合）
 character:
   enabled: false           # キャラクター表示（true で有効化）
   sprite: "./assets/sprites/char_idle.png"
@@ -109,13 +103,13 @@ character:
   frame_height: 128        # フレーム高さ
   fps: 8                   # アニメーションFPS
 
-# フォント設定
+# フォント設定（旧classicのカレンダー・月相用）
 fonts:
   main:
     path: "./assets/fonts/NotoSansCJK-Regular.otf"
     fallback: "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.otf"
 
-# ログ設定
+# ログ設定（現行main.pyでは未使用。INFO固定）
 logging:
   level: "INFO"            # ログレベル (DEBUG, INFO, WARNING, ERROR)
   format: "%(asctime)s [%(levelname)s] %(name)s: %(message)s"

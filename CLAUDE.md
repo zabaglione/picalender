@@ -1,3 +1,5 @@
+> 過去の設計・開発資料です（2026-10-01区分）。本文の機能、完了チェック、API例、性能目標は現行 `main.py` の実装・達成状況を保証しません。現在の構成は[現行実装](docs/current-implementation.md)、設定は[対応表](docs/guides/SETTINGS_STATUS.md)を参照してください。
+
 自信の度合い：高
 
 # 仕様書：Raspberry Pi Zero 2 W 常時表示型「時計・カレンダー・天気・2Dキャラ」キオスク
