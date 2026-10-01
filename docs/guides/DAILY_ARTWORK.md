@@ -19,8 +19,17 @@ PNGを作成する。同じ日付は保存済みの画像を再利用する。
 - 失敗時は前の画像を維持する。生成は日付ごとに最大2回の試行、失敗後は30分間隔を空ける。
   SSH・転送の再試行で毎回Codexを呼ぶことはない。
 - 生成処理は画面表示と別のサービス。画像の差し替えは5秒間隔で検知し、時計・六曜・月齢は継続表示する。
-- 日付、季節、日付で選ぶ森の場面、日本の祝日、取得済みの新しい天気予報を使う。
-  天気が取得できなければ、日付・季節・祝日だけで生成する。個別の日のテーマも指定できる。
+- 日付別テーマを最優先し、該当日の記念日・季節行事、日本の祝日、月ごとの季節描写、森の場面の順に使う。
+- 天気はPiの `cache/field_notes_weather.json` にある取得2時間以内・設定地点一致・対象日一致の予報だけを使う。
+  生成時点の取得時刻と、天気カテゴリ、最高・最低気温（摂氏）、降水確率を渡す。
+  条件を満たさない場合は `unknown` とし、数値を補わず天候を断定しない。新しい天気取得は行わない。
+- 確認済みの固定日イベントは [daily_events.json](../../assets/field_notes/daily_events.json) に収録している。
+  七草、ひな祭り、端午、七夕、重陽、鏡開き、小正月、大晦日、コーヒーの日の対象日だけ送る。
+  365日を網羅する記念日一覧ではなく、可変日（節分、冬至、十五夜など）は固定日扱いしない。
+  対象日に登録イベントがなくても、月ごとの季節描写を使い、記念日名を捏造しない。
+- 任意の追加イベントは `daily_art.observances` に登録できる。キーは引用符付きの `MM-DD` または
+  `YYYY-MM-DD`、値は `name` と `visual_hint` を持つオブジェクト。年指定が最優先、続いて毎年指定、
+  最後に確認済みカタログの順で選ぶ。同じ日のカタログイベントを設定値で置き換えられる。
 
 ## サーバーの準備
 
@@ -60,11 +69,19 @@ daily_art:
   # identity_file: "~/.ssh/id_ed25519"
   themes:
     "2026-12-25": "A quiet winter celebration in the forest"
+  observances:
+    "10-01":
+      name: "Neighborhood Coffee Day"
+      visual_hint: "Share a steaming cup at a small woodland table."
+    "2026-10-02":
+      name: "One-time Garden Day"
+      visual_hint: "Arrange a few autumn leaves beside a watering can."
 ```
 
 専用のSSH鍵を指定したい場合だけ `identity_file` を設定する。
 IPアドレス、ユーザー名、鍵のパス、サーバーの `config.json` は公開リポジトリに含めない。
 生成用のプロンプトは `scripts/serve_daily_art.py` の `build_prompt()` にある。
+同じ日付の画像はサーバーで再利用するため、日付別テーマやイベント設定を変更しても再生成しない。
 
 初回取得と表示の有効化：
 

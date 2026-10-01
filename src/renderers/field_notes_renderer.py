@@ -34,78 +34,30 @@ class MonthTheme:
     page_muted: tuple[int, int, int] | None = None
 
 
-# The layout, labels, weather, calendar, and artwork stay the same throughout the year.
-# The palette and Japanese seasonal design change with the local calendar month.
+# Monthly illustrations share warm paper and readable dark lettering.
+# Ink, weekend accents and weather colors echo each illustration's pigments.
+_MONTH_PIGMENTS = (
+    ((76, 48, 41), (167, 64, 49), (69, 108, 78), (183, 133, 55), (208, 188, 151)),
+    ((64, 47, 68), (158, 72, 99), (115, 91, 134), (183, 126, 92), (207, 177, 202)),
+    ((47, 68, 53), (158, 78, 78), (75, 115, 80), (190, 143, 78), (187, 211, 175)),
+    ((49, 70, 53), (150, 89, 67), (78, 116, 86), (191, 153, 91), (199, 214, 187)),
+    ((40, 69, 53), (167, 90, 65), (55, 116, 83), (184, 146, 65), (177, 209, 177)),
+    ((40, 60, 76), (157, 86, 112), (67, 112, 145), (177, 136, 83), (175, 199, 215)),
+    ((68, 65, 39), (164, 78, 53), (95, 110, 65), (182, 132, 47), (209, 200, 150)),
+    ((76, 50, 41), (163, 70, 44), (108, 105, 58), (191, 129, 50), (220, 188, 151)),
+    ((36, 51, 73), (163, 81, 61), (76, 114, 126), (200, 161, 81), (174, 192, 200)),
+    ((42, 65, 50), (170, 60, 44), (70, 112, 78), (183, 137, 67), (181, 202, 170)),
+    ((43, 61, 73), (144, 80, 82), (64, 112, 135), (164, 140, 101), (174, 200, 216)),
+    ((67, 51, 40), (165, 63, 43), (79, 111, 90), (199, 148, 65), (199, 187, 152)),
+)
 MONTHLY_THEMES = {
-    1: MonthTheme(
-        paper=(240, 226, 204), card=(252, 245, 227), ink=(76, 48, 41),
-        muted=(115, 87, 70), line=(209, 182, 145), accent=(167, 64, 49),
-        secondary=(69, 108, 78), highlight=(183, 133, 55), cloud=(208, 188, 151),
-        page_muted=(94, 71, 57),
-    ),
-    2: MonthTheme(
-        paper=(237, 226, 233), card=(249, 241, 244), ink=(64, 47, 68),
-        muted=(111, 92, 110), line=(207, 185, 201), accent=(158, 72, 99),
-        secondary=(115, 91, 134), highlight=(183, 126, 92), cloud=(207, 177, 202),
-        page_muted=(91, 75, 90),
-    ),
-    3: MonthTheme(
-        paper=(231, 237, 219), card=(247, 249, 235), ink=(47, 68, 53),
-        muted=(89, 108, 83), line=(194, 210, 177), accent=(168, 91, 91),
-        secondary=(75, 115, 80), highlight=(190, 143, 78), cloud=(187, 211, 175),
-    ),
-    4: MonthTheme(
-        paper=(229, 235, 220), card=(251, 250, 238), ink=(49, 70, 53),
-        muted=(91, 108, 84), line=(184, 204, 177), accent=(150, 89, 67),
-        secondary=(78, 116, 86), highlight=(191, 153, 91), cloud=(199, 214, 187),
-    ),
-    5: MonthTheme(
-        paper=(225, 238, 219), card=(243, 249, 234), ink=(40, 69, 53),
-        muted=(81, 108, 87), line=(180, 211, 174), accent=(167, 90, 65),
-        secondary=(55, 116, 83), highlight=(184, 146, 65), cloud=(177, 209, 177),
-        page_muted=(66, 89, 71),
-    ),
-    6: MonthTheme(
-        paper=(224, 232, 238), card=(242, 247, 248), ink=(40, 60, 76),
-        muted=(87, 102, 114), line=(179, 199, 211), accent=(157, 86, 112),
-        secondary=(67, 112, 145), highlight=(177, 136, 83), cloud=(175, 199, 215),
-        page_muted=(71, 84, 93),
-    ),
-    7: MonthTheme(
-        paper=(239, 227, 195), card=(252, 247, 225), ink=(68, 65, 39),
-        muted=(107, 99, 67), line=(210, 193, 143), accent=(164, 78, 53),
-        secondary=(95, 110, 65), highlight=(182, 132, 47), cloud=(209, 200, 150),
-        page_muted=(88, 81, 55),
-    ),
-    8: MonthTheme(
-        paper=(239, 217, 194), card=(252, 240, 218), ink=(76, 50, 41),
-        muted=(110, 83, 65), line=(211, 174, 134), accent=(163, 70, 44),
-        secondary=(108, 105, 58), highlight=(191, 129, 50), cloud=(220, 188, 151),
-    ),
-    9: MonthTheme(
-        paper=(27, 40, 63), card=(247, 239, 216), ink=(36, 51, 73),
-        muted=(89, 102, 115), line=(192, 199, 189), accent=(163, 81, 61),
-        secondary=(76, 114, 126), highlight=(200, 161, 81), cloud=(174, 192, 200),
-        page_ink=(246, 233, 200), page_muted=(189, 201, 213),
-    ),
-    10: MonthTheme(
-        paper=(228, 232, 215), card=(249, 243, 224), ink=(42, 65, 50),
-        muted=(90, 107, 80), line=(181, 198, 161), accent=(170, 60, 44),
-        secondary=(70, 112, 78), highlight=(183, 137, 67), cloud=(181, 202, 170),
-        page_muted=(74, 88, 66),
-    ),
-    11: MonthTheme(
-        paper=(218, 230, 235), card=(243, 249, 249), ink=(43, 61, 73),
-        muted=(80, 103, 113), line=(166, 191, 205), accent=(144, 80, 82),
-        secondary=(64, 112, 135), highlight=(164, 140, 101), cloud=(174, 200, 216),
-        page_muted=(66, 84, 93),
-    ),
-    12: MonthTheme(
-        paper=(48, 47, 43), card=(248, 236, 212), ink=(67, 51, 40),
-        muted=(107, 88, 68), line=(205, 180, 135), accent=(165, 63, 43),
-        secondary=(79, 111, 90), highlight=(199, 148, 65), cloud=(199, 187, 152),
-        page_ink=(248, 235, 207), page_muted=(204, 188, 160),
-    ),
+    month: MonthTheme(
+        paper=(244, 235, 216), card=(252, 246, 229), ink=ink,
+        muted=(91, 94, 82), line=(186, 190, 172), accent=accent,
+        secondary=secondary, highlight=highlight, cloud=cloud,
+    )
+    for month, (ink, accent, secondary, highlight, cloud)
+    in enumerate(_MONTH_PIGMENTS, 1)
 }
 MONTHS = tuple(calendar.month_name)
 WEEKDAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
@@ -164,7 +116,8 @@ class FieldNotesRenderer:
 
     def _make_static(self):
         surface = pygame.Surface(self.SIZE)
-        draw_dashboard_base(surface, self._theme_month, self.theme)
+        draw_dashboard_base(surface, self._theme_month, self.theme,
+                            title_width=self.font(36, "serif").size(MONTHS[self._theme_month])[0])
         artwork = self._artwork
         if artwork is None:
             artwork = pygame.image.load(str(self.assets / "forest-fox.png")).convert()

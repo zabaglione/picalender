@@ -69,3 +69,27 @@ def test_month_designs_differ_even_with_identical_colors(monkeypatch):
         assert len(set(fingerprints)) == 12
     finally:
         pygame.quit()
+
+
+@pytest.mark.parametrize("corrupt", [False, True])
+def test_unavailable_background_keeps_information_surface_and_daily_art(
+        tmp_path, monkeypatch, corrupt):
+    monkeypatch.setenv("SDL_VIDEODRIVER", "dummy")
+    monkeypatch.setenv("SDL_AUDIODRIVER", "dummy")
+    import pygame
+    from src.renderers.field_notes_renderer import MONTHLY_THEMES
+    from src.renderers import wafu_theme_design as design
+
+    monkeypatch.setattr(design, "ASSETS", tmp_path)
+    if corrupt:
+        (tmp_path / design.MONTH_BACKGROUNDS[0]).write_bytes(b"not an image")
+    pygame.init()
+    try:
+        surface = pygame.Surface((1024, 600))
+        surface.fill((255, 0, 255))
+        design.draw_dashboard_base(surface, 1, MONTHLY_THEMES[1])
+        assert surface.get_at((100, 400))[:3] == (255, 0, 255)
+        assert surface.get_at((600, 250))[:3] != (255, 0, 255)
+        assert surface.get_at((120, 260))[:3] == MONTHLY_THEMES[1].ink
+    finally:
+        pygame.quit()

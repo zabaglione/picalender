@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "events": [
+    {
+      "recurring": "01-07",
+      "name": "Nanakusa no Sekku (Seven Herbs Festival)",
+      "visual_hint": "Place seven kinds of fresh green leaves beside a small bowl of rice porridge.",
+      "source": "https://www.maff.go.jp/tohoku/syouan/blog/202309.html"
+    },
+    {
+      "recurring": "01-11",
+      "name": "Kagami Biraki (Mirror Opening)",
+      "visual_hint": "Show a small wooden mallet beside pieces of round rice cake on a tray.",
+      "source": "https://www.maff.go.jp/j/pr/aff/1712/characterinformation.html"
+    },
+    {
+      "recurring": "01-15",
+      "name": "Little New Year",
+      "visual_hint": "Set a small lantern and a gentle winter gathering in a quiet room.",
+      "source": "https://www.maff.go.jp/j/pr/aff/1712/characterinformation.html"
+    },
+    {
+      "recurring": "03-03",
+      "name": "Hinamatsuri (Doll Festival)",
+      "visual_hint": "Place a tiny tiered display of handmade dolls and peach blossoms in the room.",
+      "source": "https://www.maff.go.jp/tohoku/syouan/blog/202309.html"
+    },
+    {
+      "recurring": "05-05",
+      "name": "Tango no Sekku (Boys' Festival)",
+      "visual_hint": "Hang a small carp streamer outside and add iris leaves nearby.",
+      "source": "https://www.maff.go.jp/tohoku/syouan/blog/202309.html"
+    },
+    {
+      "recurring": "07-07",
+      "name": "Tanabata (Star Festival)",
+      "visual_hint": "Add a leafy bamboo branch with colorful paper strips; shelter it beneath an eave if rain is forecast.",
+      "source": "https://www.maff.go.jp/tohoku/syouan/blog/202309.html"
+    },
+    {
+      "recurring": "09-09",
+      "name": "Choyo no Sekku (Chrysanthemum Festival)",
+      "visual_hint": "Set a few chrysanthemum flowers beside a small cup on a garden table.",
+      "source": "https://www.maff.go.jp/tohoku/syouan/blog/202309.html"
+    },
+    {
+      "recurring": "10-01",
+      "name": "Coffee Day",
+      "visual_hint": "Share a steaming cup of coffee and a few coffee beans at a cozy woodland table.",
+      "source": "https://coffee.ajca.or.jp/about/international-coffee-day/"
+    },
+    {
+      "recurring": "12-31",
+      "name": "New Year's Eve",
+      "visual_hint": "Show a softly lit home at the end of the year with a tidy broom resting by the door.",
+      "source": "https://www.maff.go.jp/j/pr/aff/1712/characterinformation.html"
+    }
+  ]
+}
